@@ -127,9 +127,9 @@ write_config() {
 	local eht_phy_flags=0
 
 	# Set some default BAND if none is set
-	if [ -z "${BAND}" ]; then
+	if [ -z "${CONFIG["BAND"]}" ]; then
 		# Use 2.4 GHz for 802.11g/n and assume 5 GHz for anything else
-		case "${HW_MODE}" in
+		case "${CONFIG["HW_MODE"]}" in
 			gn)
 				BAND="2g"
 				;;
@@ -164,13 +164,13 @@ write_config() {
 
 			# Check if we are in the right band
 			"* 2412.0 MHz"*)
-				if [ "${BAND}" = "2g" ]; then
+				if [ "${CONFIG["BAND"]}" = "2g" ]; then
 					break
 				fi
 				;;
 
 			"* 5180.0 MHz"*)
-				if [ "${BAND}" = "5g" ]; then
+				if [ "${CONFIG["BAND"]}" = "5g" ]; then
 					break
 				fi
 				;;
@@ -310,18 +310,18 @@ write_config() {
 	done
 
 	# Set the channel to zero if not set
-	if [ -z "${CHANNEL}" ]; then
-		CHANNEL=0
+	if [ -z "${CONFIG["CHANNEL"]}" ]; then
+		CONFIG["CHANNEL"]=0
 	fi
 
 	# Translate the old HW_MODE to the newer MODE setting
-	if [ -z "${MODE}" ]; then
-		case "${HW_MODE}" in
+	if [ -z "${CONFIG["MODE"]}" ]; then
+		case "${CONFIG["HW_MODE"]}" in
 			ac)
-				MODE="VHT20"
+				CONFIG["MODE"]="VHT20"
 				;;
 			an|gn)
-				MODE="HT20";
+				CONFIG["MODE"]="HT20";
 				;;
 		esac
 	fi
@@ -338,7 +338,7 @@ write_config() {
 	echo "driver=nl80211"
 
 	# Set the country code
-	echo "country_code=${COUNTRY}"
+	echo "country_code=${CONFIG["COUNTRY"]}"
 	echo "country3=0x49"
 
 	# Enable 802.11d and 802.11h
@@ -346,8 +346,8 @@ write_config() {
 	echo "ieee80211h=1"
 
 	# Set the channel (if chosen)
-	if [ -n "${CHANNEL}" ]; then
-		echo "channel=${CHANNEL}"
+	if [ -n "${CONFIG["CHANNEL"]}" ]; then
+		echo "channel=${CONFIG["CHANNEL"]}"
 	fi
 
 	# Always advertise TPC
@@ -363,7 +363,7 @@ write_config() {
 	# 802.11n
 	local enable_n=0
 
-	case "${MODE}" in
+	case "${CONFIG["MODE"]}" in
 		HT*|VHT*|HE*|EHT*)
 			enable_n=1
 			;;
@@ -374,7 +374,7 @@ write_config() {
 	local vht_oper_chwidth=0
 	local vht_oper_centr_freq_seg0_idx=""
 
-	case "${MODE}" in
+	case "${CONFIG["MODE"]}" in
 		VHT20|HE20|EHT20)
 			enable_ac=1
 			;;
@@ -384,13 +384,13 @@ write_config() {
 			enable_ac=1
 
 			# Compute the channel segment index
-			if [ "${CHANNEL}" -gt 0 ]; then
-				case "$(( (${CHANNEL} / 4) % 2 ))" in
+			if [ "${CONFIG["CHANNEL"]}" -gt 0 ]; then
+				case "$(( (${CONFIG["CHANNEL"]} / 4) % 2 ))" in
 					0)
-						vht_oper_centr_freq_seg0_idx="$(( ${CHANNEL} - 2 ))"
+						vht_oper_centr_freq_seg0_idx="$(( ${CONFIG["CHANNEL"]} - 2 ))"
 						;;
 					1)
-						vht_oper_centr_freq_seg0_idx="$(( ${CHANNEL} + 2 ))"
+						vht_oper_centr_freq_seg0_idx="$(( ${CONFIG["CHANNEL"]} + 2 ))"
 						;;
 				esac
 			fi
@@ -402,19 +402,19 @@ write_config() {
 			vht_oper_chwidth=1
 
 			# Compute the channel segment index
-			if [ "${CHANNEL}" -gt 0 ]; then
-				case "$(( (${CHANNEL} / 4) % 4 ))" in
+			if [ "${CONFIG["CHANNEL"]}" -gt 0 ]; then
+				case "$(( (${CONFIG["CHANNEL"]} / 4) % 4 ))" in
 					0)
-						vht_oper_centr_freq_seg0_idx="$(( ${CHANNEL} - 6 ))"
+						vht_oper_centr_freq_seg0_idx="$(( ${CONFIG["CHANNEL"]} - 6 ))"
 						;;
 					1)
-						vht_oper_centr_freq_seg0_idx="$(( ${CHANNEL} + 6 ))"
+						vht_oper_centr_freq_seg0_idx="$(( ${CONFIG["CHANNEL"]} + 6 ))"
 						;;
 					2)
-						vht_oper_centr_freq_seg0_idx="$(( ${CHANNEL} + 2 ))"
+						vht_oper_centr_freq_seg0_idx="$(( ${CONFIG["CHANNEL"]} + 2 ))"
 						;;
 					3)
-						vht_oper_centr_freq_seg0_idx="$(( ${CHANNEL} - 2 ))"
+						vht_oper_centr_freq_seg0_idx="$(( ${CONFIG["CHANNEL"]} - 2 ))"
 						;;
 				esac
 			fi
@@ -426,8 +426,8 @@ write_config() {
 			vht_oper_chwidth=2
 
 			# Compute the channel segment index
-			if [ "${CHANNEL}" -gt 0 ]; then
-				case "${CHANNEL}" in
+			if [ "${CONFIG["CHANNEL"]}" -gt 0 ]; then
+				case "${CONFIG["CHANNEL"]}" in
 					36|40|44|48|52|56|60|64)
 						vht_oper_centr_freq_seg0_idx=50
 						;;
@@ -447,7 +447,7 @@ write_config() {
 	local he_oper_chwidth="${vht_oper_chwidth}"
 	local he_oper_centr_freq_seg0_idx="${vht_oper_centr_freq_seg0_idx}"
 
-	case "${MODE}" in
+	case "${CONFIG["MODE"]}" in
 		HE*|EHT*)
 			enable_ax=1
 			;;
@@ -458,14 +458,14 @@ write_config() {
 	local eht_oper_chwidth="${he_oper_chwidth}"
 	local eht_oper_centr_freq_seg0_idx="${he_oper_centr_freq_seg0_idx}"
 
-	case "${MODE}" in
+	case "${CONFIG["MODE"]}" in
 		EHT*)
 			enable_be=1
 			;;
 	esac
 
 	# Set hardware mode
-	case "${BAND}" in
+	case "${CONFIG["BAND"]}" in
 		5g)
 			echo "hw_mode=a"
 			;;
@@ -527,15 +527,16 @@ write_config() {
 	fi
 
 	# Configure antennas
-	if [ -z "${RX_ANTENNAS}" ]; then
-		RX_ANTENNAS="0xffffffff"
+	if [ -z "${CONFIG["RX_ANTENNAS"]}" ]; then
+		CONFIG["RX_ANTENNAS"]="0xffffffff"
 	fi
-	if [ -z "${TX_ANTENNAS}" ]; then
-		TX_ANTENNAS="0xffffffff"
+	if [ -z "${CONFIG["TX_ANTENNAS"]}" ]; then
+		CONFIG["TX_ANTENNAS"]="0xffffffff"
 	fi
 
 	# Set the antennas to use
-	iw phy "${phy}" set antenna "${TX_ANTENNAS}" "${RX_ANTENNAS}" &>/dev/null
+	iw phy "${phy}" set antenna \
+		"${CONFIG["TX_ANTENNAS"]}" "${CONFIG["RX_ANTENNAS"]}" &>/dev/null
 
 	# Enable authentication
 	echo "auth_algs=1"
@@ -548,28 +549,28 @@ write_config() {
 	echo "disassoc_low_ack=1"
 
 	# SSID
-	echo "ssid2=\"${SSID}\""
+	echo "ssid2=\"${CONFIG["SSID"]}\""
 	echo "utf8_ssid=1"
 
 	# Hide the SSID?
-	if [ "${HIDESSID}" = "on" ]; then
+	if [ "${CONFIG["HIDESSID"]}" = "on" ]; then
 		echo "ignore_broadcast_ssid=2"
 	fi
 
 	# Isolate clients?
-	if [ "${CLIENTISOLATION}" = "on" ]; then
+	if [ "${CONFIG["CLIENTISOLATION"]}" = "on" ]; then
 		echo "ap_isolate=1"
 	fi
 
 	# Disable neighbour scan?
-	if [ "${NOSCAN}" = "on" ]; then
+	if [ "${CONFIG["NOSCAN"]}" = "on" ]; then
 		echo "noscan=1"
 	else
 		echo "noscan=0"
 	fi
 
 	# Management Frame Protection (802.11w)
-	case "${IEEE80211W}" in
+	case "${CONFIG["IEEE80211W"]}" in
 		on)
 			echo "ieee80211w=2"
 
@@ -595,35 +596,35 @@ write_config() {
 	esac
 
 	# Encryption
-	case "${ENC}" in
+	case "${CONFIG["ENC"]}" in
 		wpa3)
 			echo "wpa=2"
-			echo "wpa_passphrase=${PWD}"
+			echo "wpa_passphrase=${CONFIG["PWD"]}"
 			echo "wpa_key_mgmt=SAE"
 			echo "rsn_pairwise=CCMP"
 			;;
 		wpa2+3)
 			echo "wpa=2"
-			echo "wpa_passphrase=${PWD}"
+			echo "wpa_passphrase=${CONFIG["PWD"]}"
 			echo "wpa_key_mgmt=WPA-PSK WPA-PSK-SHA256 SAE"
 			echo "rsn_pairwise=CCMP"
 			;;
 		wpa2)
 			echo "wpa=2"
-			echo "wpa_passphrase=${PWD}"
+			echo "wpa_passphrase=${CONFIG["PWD"]}"
 			echo "wpa_key_mgmt=WPA-PSK WPA-PSK-SHA256"
 			echo "rsn_pairwise=CCMP"
 			;;
 		wpa1+2)
 			echo "wpa=3"
-			echo "wpa_passphrase=${PWD}"
+			echo "wpa_passphrase=${CONFIG["PWD"]}"
 			echo "wpa_key_mgmt=WPA-PSK WPA-PSK-SHA256"
 			echo "wpa_pairwise=TKIP"
 			echo "rsn_pairwise=CCMP"
 			;;
 		wpa1)
 			echo "wpa=1"
-			echo "wpa_passphrase=${PWD}"
+			echo "wpa_passphrase=${CONFIG["PWD"]}"
 			echo "wpa_key_mgmt=WPA-PSK WPA-PSK-SHA256"
 			echo "wpa_pairwise=TKIP"
 			;;
@@ -631,7 +632,7 @@ write_config() {
 
 	# Multi-Band Operation - prefer WiFi over mobile networks
 	# This feature requires Management Frame Protection
-	case "${IEEE80211W}" in
+	case "${CONFIG["IEEE80211W"]}" in
 		on|optional)
 			echo "mbo=1"
 			echo "mbo_cell_data_conn_pref=1"
@@ -665,13 +666,14 @@ write_config() {
 	return 0
 }
 
-eval $(/usr/local/bin/readhash /var/ipfire/wlanap/settings)
+# Read the configuration
+readhash CONFIG "/var/ipfire/wlanap/settings"
 
 case "${1}" in
 	start)
-		interface="$(find_interface "${INTERFACE}")"
+		interface="$(find_interface "${CONFIG["INTERFACE"]}")"
 		if [ -z "${interface}" ]; then
-			boot_mesg "Could not find interface with address ${INTERFACE} for wireless access point"
+			boot_mesg "Could not find interface with address ${CONFIG["INTERFACE"]} for wireless access point"
 			echo_failure
 			exit 1
 		fi
@@ -693,8 +695,8 @@ case "${1}" in
 		)
 
 		# Enable debugging?
-		if [ -n "${DEBUG}" ] && [[ "${DEBUG}" =~ ^[0-9]+$ ]]; then
-			for (( i = 0; i < DEBUG; i++ )); do
+		if [ -n "${CONFIG["DEBUG"]}" ] && [[ "${CONFIG["DEBUG"]}" =~ ^[0-9]+$ ]]; then
+			for (( i = 0; i < CONFIG["DEBUG"]; i++ )); do
 				args+=( "-d" )
 			done
 		fi
@@ -720,9 +722,9 @@ case "${1}" in
 		;;
 
 	show-config)
-		interface="$(find_interface "${INTERFACE}")"
+		interface="$(find_interface "${CONFIG["INTERFACE"]}")"
 		if [ -z "${interface}" ]; then
-			boot_mesg "Could not find interface with address ${INTERFACE} for wireless access point"
+			boot_mesg "Could not find interface with address ${CONFIG["INTERFACE"]} for wireless access point"
 			echo_failure
 			exit 1
 		fi
