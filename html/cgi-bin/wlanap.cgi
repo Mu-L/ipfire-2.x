@@ -102,7 +102,7 @@ if ($cgiparams{'ACTION'} eq "$Lang::tr{'save'}") {
 	}
 
 	# Validate MODE
-	unless ($cgiparams{'MODE'} =~ m/^(HT|HE|VHT|EHT)(20|40|80|160|320)$/) {
+	unless ($cgiparams{'MODE'} =~ m/^(|HT|HE|VHT|EHT)(20|40|80|160|320)$/) {
 		$errormessage .= "$Lang::tr{'wlanap invalid mode'}<br />";
 	}
 
@@ -341,6 +341,12 @@ print <<END;
 							</option>
 							<option value="HT20" $selected{'MODE'}{'HT20'}>
 								$Lang::tr{'wlanap 802.11agn 20mhz'}
+							</option>
+						</optgroup>
+
+						<optgroup label="$Lang::tr{'wlanap 802.11ag'}">
+							<option value="20" $selected{'MODE'}{'20'}>
+								$Lang::tr{'wlanap 802.11ag 20mhz'}
 							</option>
 						</optgroup>
 					</select>

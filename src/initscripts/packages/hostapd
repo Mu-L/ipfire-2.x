@@ -360,6 +360,15 @@ write_config() {
 	# Always enable WMM
 	echo "wmm_enabled=1"
 
+	# 802.11n
+	local enable_n=0
+
+	case "${MODE}" in
+		HT*|VHT*|HE*|EHT*)
+			enable_n=1
+			;;
+	esac
+
 	# 802.11ac
 	local enable_ac=0
 	local vht_oper_chwidth=0
@@ -507,8 +516,10 @@ write_config() {
 		fi
 	fi
 
-	# Always enable 802.11n
-	echo "ieee80211n=1"
+	# Enable 802.11n?
+	if [ "${enable_n}" -eq 1 ]; then
+		echo "ieee80211n=1"
+	fi
 
 	# Set HT capabilities
 	if [ ${#ht_caps[@]} -gt 0 ]; then
