@@ -930,7 +930,7 @@ readhash() {
 
 		# strip leading and trailing single quotes
 		case "${val}" in
-			'*')
+			\'*\')
 				val="${val#\'}"
 				val="${val%\'}"
 				;;
