@@ -127,6 +127,9 @@ rm -vf \
 # update linker config
 ldconfig
 
+# Restart init
+telinit u
+
 # Update Language cache
 /usr/local/bin/update-lang-cache
 
