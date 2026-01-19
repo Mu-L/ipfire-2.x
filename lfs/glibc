@@ -120,6 +120,8 @@ $(TARGET) : $(patsubst %,$(DIR_DL)/%,$(objects))
 	@mkdir $(DIR_SRC)/glibc-build
 
 	cd $(DIR_APP) && patch -Np1 < $(DIR_SRC)/src/patches/glibc-localedef-no-archive.patch
+	cd $(DIR_APP) && patch -Np1 < $(DIR_SRC)/src/patches/glibc-2.42-CVE-2026-0861.patch
+	cd $(DIR_APP) && patch -Np1 < $(DIR_SRC)/src/patches/glibc-2.42-CVE-2026-0915.patch
 
 ifneq "$(TOOLCHAIN)" "1"
  ifeq "$(BUILD_ARCH)" "x86_64"
