@@ -72,8 +72,9 @@ if [ $BOOTSIZE -lt 100000 ]; then
 fi
 
 # Check if reiser filesystem is used
-if [ `/bin/grep -c "reiserfs" /proc/self/mounts` > 0 ]; then
+if grep -q "reiserfs" /proc/self/mounts; then
 	exit_with_error "ERROR cannot update because reiserfs no longer supported by kernel." 4
+fi
 
 # Remove the old kernel
 rm -rvf \
