@@ -9,7 +9,7 @@
 #usr/lib/libtpms.la
 #usr/lib/libtpms.so
 usr/lib/libtpms.so.0
-usr/lib/libtpms.so.0.10.1
+usr/lib/libtpms.so.0.10.2
 #usr/lib/pkgconfig/libtpms.pc
 #usr/share/man/man3/TPMLIB_CancelCommand.3
 #usr/share/man/man3/TPMLIB_ChooseTPMVersion.3
