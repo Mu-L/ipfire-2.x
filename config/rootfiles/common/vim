@@ -151,6 +151,8 @@ usr/share/vim
 #usr/share/vim/vim91/compiler/bash.vim
 #usr/share/vim/vim91/compiler/bcc.vim
 #usr/share/vim/vim91/compiler/bdf.vim
+#usr/share/vim/vim91/compiler/biome.vim
+#usr/share/vim/vim91/compiler/cabal.vim
 #usr/share/vim/vim91/compiler/cargo.vim
 #usr/share/vim/vim91/compiler/checkstyle.vim
 #usr/share/vim/vim91/compiler/cm3.vim
@@ -229,6 +231,7 @@ usr/share/vim
 #usr/share/vim/vim91/compiler/podchecker.vim
 #usr/share/vim/vim91/compiler/powershell.vim
 #usr/share/vim/vim91/compiler/pylint.vim
+#usr/share/vim/vim91/compiler/pyright.vim
 #usr/share/vim/vim91/compiler/pytest.vim
 #usr/share/vim/vim91/compiler/pyunit.vim
 #usr/share/vim/vim91/compiler/raco.vim
@@ -260,8 +263,10 @@ usr/share/vim
 #usr/share/vim/vim91/compiler/tcl.vim
 #usr/share/vim/vim91/compiler/tex.vim
 #usr/share/vim/vim91/compiler/tidy.vim
+#usr/share/vim/vim91/compiler/tombi.vim
 #usr/share/vim/vim91/compiler/ts-node.vim
 #usr/share/vim/vim91/compiler/tsc.vim
+#usr/share/vim/vim91/compiler/ty.vim
 #usr/share/vim/vim91/compiler/typedoc.vim
 #usr/share/vim/vim91/compiler/typst.vim
 #usr/share/vim/vim91/compiler/vimdoc.vim
@@ -467,9 +472,12 @@ usr/share/vim
 #usr/share/vim/vim91/ftplugin/bash.vim
 #usr/share/vim/vim91/ftplugin/basic.vim
 #usr/share/vim/vim91/ftplugin/bdf.vim
+#usr/share/vim/vim91/ftplugin/bicep-params.vim
+#usr/share/vim/vim91/ftplugin/bicep.vim
 #usr/share/vim/vim91/ftplugin/bindzone.vim
 #usr/share/vim/vim91/ftplugin/bitbake.vim
 #usr/share/vim/vim91/ftplugin/bp.vim
+#usr/share/vim/vim91/ftplugin/bpftrace.vim
 #usr/share/vim/vim91/ftplugin/brighterscript.vim
 #usr/share/vim/vim91/ftplugin/brightscript.vim
 #usr/share/vim/vim91/ftplugin/bst.vim
@@ -627,6 +635,7 @@ usr/share/vim
 #usr/share/vim/vim91/ftplugin/lc.vim
 #usr/share/vim/vim91/ftplugin/ld.vim
 #usr/share/vim/vim91/ftplugin/ldapconf.vim
+#usr/share/vim/vim91/ftplugin/leex.vim
 #usr/share/vim/vim91/ftplugin/leo.vim
 #usr/share/vim/vim91/ftplugin/less.vim
 #usr/share/vim/vim91/ftplugin/lex.vim
@@ -778,9 +787,11 @@ usr/share/vim
 #usr/share/vim/vim91/ftplugin/slpconf.vim
 #usr/share/vim/vim91/ftplugin/slpreg.vim
 #usr/share/vim/vim91/ftplugin/slpspi.vim
+#usr/share/vim/vim91/ftplugin/sml.vim
 #usr/share/vim/vim91/ftplugin/snakemake.vim
 #usr/share/vim/vim91/ftplugin/solidity.vim
 #usr/share/vim/vim91/ftplugin/solution.vim
+#usr/share/vim/vim91/ftplugin/soy.vim
 #usr/share/vim/vim91/ftplugin/spajson.vim
 #usr/share/vim/vim91/ftplugin/spec.vim
 #usr/share/vim/vim91/ftplugin/sql.vim
@@ -878,6 +889,7 @@ usr/share/vim
 #usr/share/vim/vim91/indent/basic.vim
 #usr/share/vim/vim91/indent/bib.vim
 #usr/share/vim/vim91/indent/bitbake.vim
+#usr/share/vim/vim91/indent/bpftrace.vim
 #usr/share/vim/vim91/indent/bst.vim
 #usr/share/vim/vim91/indent/bzl.vim
 #usr/share/vim/vim91/indent/c.vim
@@ -950,6 +962,7 @@ usr/share/vim
 #usr/share/vim/vim91/indent/krl.vim
 #usr/share/vim/vim91/indent/ld.vim
 #usr/share/vim/vim91/indent/less.vim
+#usr/share/vim/vim91/indent/lf.vim
 #usr/share/vim/vim91/indent/lifelines.vim
 #usr/share/vim/vim91/indent/liquid.vim
 #usr/share/vim/vim91/indent/lisp.vim
@@ -1125,6 +1138,14 @@ usr/share/vim
 #usr/share/vim/vim91/pack/dist/opt/editorconfig/ftdetect/editorconfig.vim
 #usr/share/vim/vim91/pack/dist/opt/editorconfig/plugin
 #usr/share/vim/vim91/pack/dist/opt/editorconfig/plugin/editorconfig.vim
+#usr/share/vim/vim91/pack/dist/opt/helpcurwin
+#usr/share/vim/vim91/pack/dist/opt/helpcurwin/autoload
+#usr/share/vim/vim91/pack/dist/opt/helpcurwin/autoload/helpcurwin.vim
+#usr/share/vim/vim91/pack/dist/opt/helpcurwin/doc
+#usr/share/vim/vim91/pack/dist/opt/helpcurwin/doc/helpcurwin.txt
+#usr/share/vim/vim91/pack/dist/opt/helpcurwin/doc/tags
+#usr/share/vim/vim91/pack/dist/opt/helpcurwin/plugin
+#usr/share/vim/vim91/pack/dist/opt/helpcurwin/plugin/helpcurwin.vim
 #usr/share/vim/vim91/pack/dist/opt/helptoc
 #usr/share/vim/vim91/pack/dist/opt/helptoc/autoload
 #usr/share/vim/vim91/pack/dist/opt/helptoc/autoload/helptoc.vim
@@ -1166,6 +1187,14 @@ usr/share/vim
 #usr/share/vim/vim91/pack/dist/opt/nohlsearch
 #usr/share/vim/vim91/pack/dist/opt/nohlsearch/plugin
 #usr/share/vim/vim91/pack/dist/opt/nohlsearch/plugin/nohlsearch.vim
+#usr/share/vim/vim91/pack/dist/opt/osc52
+#usr/share/vim/vim91/pack/dist/opt/osc52/autoload
+#usr/share/vim/vim91/pack/dist/opt/osc52/autoload/osc52.vim
+#usr/share/vim/vim91/pack/dist/opt/osc52/doc
+#usr/share/vim/vim91/pack/dist/opt/osc52/doc/osc52.txt
+#usr/share/vim/vim91/pack/dist/opt/osc52/doc/tags
+#usr/share/vim/vim91/pack/dist/opt/osc52/plugin
+#usr/share/vim/vim91/pack/dist/opt/osc52/plugin/osc52.vim
 #usr/share/vim/vim91/pack/dist/opt/shellmenu
 #usr/share/vim/vim91/pack/dist/opt/shellmenu/plugin
 #usr/share/vim/vim91/pack/dist/opt/shellmenu/plugin/shellmenu.vim
@@ -1302,6 +1331,7 @@ usr/share/vim
 #usr/share/vim/vim91/syntax/bindzone.vim
 #usr/share/vim/vim91/syntax/bitbake.vim
 #usr/share/vim/vim91/syntax/blank.vim
+#usr/share/vim/vim91/syntax/bpftrace.vim
 #usr/share/vim/vim91/syntax/bsdl.vim
 #usr/share/vim/vim91/syntax/bst.vim
 #usr/share/vim/vim91/syntax/btm.vim
@@ -1574,6 +1604,7 @@ usr/share/vim
 #usr/share/vim/vim91/syntax/ld.vim
 #usr/share/vim/vim91/syntax/ldapconf.vim
 #usr/share/vim/vim91/syntax/ldif.vim
+#usr/share/vim/vim91/syntax/leex.vim
 #usr/share/vim/vim91/syntax/less.vim
 #usr/share/vim/vim91/syntax/lex.vim
 #usr/share/vim/vim91/syntax/lf.vim
@@ -1826,10 +1857,6 @@ usr/share/vim
 #usr/share/vim/vim91/syntax/shaderslang.vim
 #usr/share/vim/vim91/syntax/shared
 #usr/share/vim/vim91/syntax/shared/README.txt
-#usr/share/vim/vim91/syntax/shared/context-data-context.vim
-#usr/share/vim/vim91/syntax/shared/context-data-interfaces.vim
-#usr/share/vim/vim91/syntax/shared/context-data-metafun.vim
-#usr/share/vim/vim91/syntax/shared/context-data-tex.vim
 #usr/share/vim/vim91/syntax/shared/debarchitectures.vim
 #usr/share/vim/vim91/syntax/shared/debversions.vim
 #usr/share/vim/vim91/syntax/shared/hgcommitDiff.vim
@@ -2034,6 +2061,7 @@ usr/share/vim
 #usr/share/vim/vim91/tools/mve.awk
 #usr/share/vim/vim91/tools/mve.txt
 #usr/share/vim/vim91/tools/pltags.pl
+#usr/share/vim/vim91/tools/preproc_indent.vim
 #usr/share/vim/vim91/tools/ref
 #usr/share/vim/vim91/tools/shtags.1
 #usr/share/vim/vim91/tools/shtags.pl
@@ -2103,9 +2131,11 @@ usr/share/vim
 #usr/share/vim/vim91/tutor/tutor1.zh_cn
 #usr/share/vim/vim91/tutor/tutor1.zh_tw
 #usr/share/vim/vim91/tutor/tutor2
+#usr/share/vim/vim91/tutor/tutor2.es
 #usr/share/vim/vim91/tutor/tutor2.fr
 #usr/share/vim/vim91/tutor/tutor2.gl
 #usr/share/vim/vim91/tutor/tutor2.it
+#usr/share/vim/vim91/tutor/tutor2.ja
 #usr/share/vim/vim91/tutor/tutor2.ru
 #usr/share/vim/vim91/tutor/tutor2.sr
 #usr/share/vim/vim91/vimrc_example.vim
