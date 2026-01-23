@@ -24,7 +24,7 @@
 
 include Config
 
-VER        = 0.13.1
+VER        = 0.13.2
 
 THISAPP    = synstructure-$(VER)
 DL_FILE    = $(THISAPP).tar.gz
@@ -40,7 +40,7 @@ objects = $(DL_FILE)
 
 $(DL_FILE) = $(DL_FROM)/$(DL_FILE)
 
-$(DL_FILE)_BLAKE2 = b29ee88c559a2d58fa46b7af155b448f001649ea79a1898f0ac87e69108b87c65cbd287d8f9001f360df7fef06ff39c937b48d33e487a30c8eec6a46c639c0c2
+$(DL_FILE)_BLAKE2 = c475f370d901a371262f466dd98e3914dd6f36aa473a33362866c0f781d27b1813233f96b02208f3463a825e8012cab0f8872eed848d9aa0eac88b581a0d261e
 
 install : $(TARGET)
 

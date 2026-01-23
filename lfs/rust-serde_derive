@@ -24,7 +24,7 @@
 
 include Config
 
-VER        = 1.0.216
+VER        = 1.0.228
 
 THISAPP    = serde_derive-$(VER)
 DL_FILE    = $(THISAPP).tar.gz
@@ -40,7 +40,7 @@ objects = $(DL_FILE)
 
 $(DL_FILE) = $(DL_FROM)/$(DL_FILE)
 
-$(DL_FILE)_BLAKE2 = 12a9228679c16288c08c8b256707e276aec79f84ac7af0c4cfd1f109500dfea80438df17d798acdd30a9743c753e70093b22bd324217529bac483f257682a3e2
+$(DL_FILE)_BLAKE2 = 166ee2f9ff9f7a0928d0a65a72db3d9226c377bca2a1771956e8ecd9c7faf0544673c9c21be2a5553e621b55c74c7b958052592a1cf6eb6427a2d4f3e3dc6bb8
 
 install : $(TARGET)
 
