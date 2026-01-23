@@ -2107,6 +2107,8 @@ build_system() {
 	lfsmake2 python3-pyfuse3
 	lfsmake2 python3-pillow
 	lfsmake2 python3-reportlab
+	lfsmake2 python3-wcwidth
+	lfsmake2 python3-prompt-toolkit
 	lfsmake2 aws-cli
 	lfsmake2 oci-python-sdk
 	lfsmake2 oci-cli
