@@ -1534,6 +1534,7 @@ detect:
   # Cache MPM contexts to the disk to avoid rule compilation at the startup.
   # Cache files are created in the standard library directory.
   sgh-mpm-caching: yes
+  sgh-mpm-caching-max-age: 7d
   sgh-mpm-caching-path: /var/cache/suricata/sgh
   # inspection-recursion-limit: 3000
   # maximum number of times a tx will get logged for rules without app-layer keywords

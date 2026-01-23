@@ -1,0 +1,1341 @@
+commit 47fc78eeae9a365b4d36609154642ca72c9cb9fb
+Author: Lukas Sismis <lsismis@oisf.net>
+Date:   Mon Sep 15 11:40:30 2025 +0200
+
+    hs: update the file description
+
+diff --git a/src/util-mpm-hs-cache.c b/src/util-mpm-hs-cache.c
+index 2e58676fa..fd54cf306 100644
+--- a/src/util-mpm-hs-cache.c
++++ b/src/util-mpm-hs-cache.c
+@@ -20,7 +20,7 @@
+  *
+  * \author Lukas Sismis <lsismis@oisf.net>
+  *
+- * MPM pattern matcher that calls the Hyperscan regex matcher.
++ * Hyperscan cache helper utilities for MPM cache files.
+  */
+ 
+ #include "suricata-common.h"
+commit 2a313ff429eb49be5e4c3b9dadfca127fa64c5fe
+Author: Lukas Sismis <lsismis@oisf.net>
+Date:   Thu Oct 30 12:01:33 2025 +0100
+
+    hs: reduce cache filename size to max file limit
+
+diff --git a/src/util-mpm-hs-cache.c b/src/util-mpm-hs-cache.c
+index fd54cf306..1e5001ba0 100644
+--- a/src/util-mpm-hs-cache.c
++++ b/src/util-mpm-hs-cache.c
+@@ -41,7 +41,7 @@ static const char *HSCacheConstructFPath(const char *folder_path, uint64_t hs_db
+     static char hash_file_path[PATH_MAX];
+ 
+     char hash_file_path_suffix[] = "_v1.hs";
+-    char filename[PATH_MAX];
++    char filename[NAME_MAX];
+     uint64_t r = snprintf(
+             filename, sizeof(filename), "%020" PRIu64 "%s", hs_db_hash, hash_file_path_suffix);
+     if (r != (uint64_t)(20 + strlen(hash_file_path_suffix)))
+commit c282880174875fab6bcc62a2a60c85b58dfb0d32
+Author: Lukas Sismis <lsismis@oisf.net>
+Date:   Thu Oct 30 12:04:35 2025 +0100
+
+    hs: change hash in the cache name to SHA256
+
+diff --git a/src/util-mpm-hs-cache.c b/src/util-mpm-hs-cache.c
+index 1e5001ba0..83bbee59c 100644
+--- a/src/util-mpm-hs-cache.c
++++ b/src/util-mpm-hs-cache.c
+@@ -34,17 +34,17 @@
+ 
+ #ifdef BUILD_HYPERSCAN
+ 
++#include "rust.h"
+ #include <hs.h>
+ 
+-static const char *HSCacheConstructFPath(const char *folder_path, uint64_t hs_db_hash)
++static const char *HSCacheConstructFPath(const char *folder_path, const char *hs_db_hash)
+ {
+     static char hash_file_path[PATH_MAX];
+ 
+     char hash_file_path_suffix[] = "_v1.hs";
+     char filename[NAME_MAX];
+-    uint64_t r = snprintf(
+-            filename, sizeof(filename), "%020" PRIu64 "%s", hs_db_hash, hash_file_path_suffix);
+-    if (r != (uint64_t)(20 + strlen(hash_file_path_suffix)))
++    uint64_t r = snprintf(filename, sizeof(filename), "%s%s", hs_db_hash, hash_file_path_suffix);
++    if (r != (uint64_t)(strlen(hs_db_hash) + strlen(hash_file_path_suffix)))
+         return NULL;
+ 
+     r = PathMerge(hash_file_path, sizeof(hash_file_path), folder_path, filename);
+@@ -104,22 +104,22 @@ static char *HSReadStream(const char *file_path, size_t *buffer_sz)
+  * Function to hash the searched pattern, only things relevant to Hyperscan
+  * compilation are hashed.
+  */
+-static void SCHSCachePatternHash(const SCHSPattern *p, uint32_t *h1, uint32_t *h2)
++static void SCHSCachePatternHash(const SCHSPattern *p, SCSha256 *sha256)
+ {
+     BUG_ON(p->original_pat == NULL);
+     BUG_ON(p->sids == NULL);
+ 
+-    hashlittle2_safe(&p->len, sizeof(p->len), h1, h2);
+-    hashlittle2_safe(&p->flags, sizeof(p->flags), h1, h2);
+-    hashlittle2_safe(p->original_pat, p->len, h1, h2);
+-    hashlittle2_safe(&p->id, sizeof(p->id), h1, h2);
+-    hashlittle2_safe(&p->offset, sizeof(p->offset), h1, h2);
+-    hashlittle2_safe(&p->depth, sizeof(p->depth), h1, h2);
+-    hashlittle2_safe(&p->sids_size, sizeof(p->sids_size), h1, h2);
+-    hashlittle2_safe(p->sids, p->sids_size * sizeof(SigIntId), h1, h2);
++    SCSha256Update(sha256, (const uint8_t *)&p->len, sizeof(p->len));
++    SCSha256Update(sha256, (const uint8_t *)&p->flags, sizeof(p->flags));
++    SCSha256Update(sha256, (const uint8_t *)p->original_pat, p->len);
++    SCSha256Update(sha256, (const uint8_t *)&p->id, sizeof(p->id));
++    SCSha256Update(sha256, (const uint8_t *)&p->offset, sizeof(p->offset));
++    SCSha256Update(sha256, (const uint8_t *)&p->depth, sizeof(p->depth));
++    SCSha256Update(sha256, (const uint8_t *)&p->sids_size, sizeof(p->sids_size));
++    SCSha256Update(sha256, (const uint8_t *)p->sids, p->sids_size * sizeof(SigIntId));
+ }
+ 
+-int HSLoadCache(hs_database_t **hs_db, uint64_t hs_db_hash, const char *dirpath)
++int HSLoadCache(hs_database_t **hs_db, const char *hs_db_hash, const char *dirpath)
+ {
+     const char *hash_file_static = HSCacheConstructFPath(dirpath, hs_db_hash);
+     if (hash_file_static == NULL)
+@@ -161,7 +161,7 @@ freeup:
+     return ret;
+ }
+ 
+-static int HSSaveCache(hs_database_t *hs_db, uint64_t hs_db_hash, const char *dstpath)
++static int HSSaveCache(hs_database_t *hs_db, const char *hs_db_hash, const char *dstpath)
+ {
+     static bool notified = false;
+     char *db_stream = NULL;
+@@ -220,14 +220,26 @@ cleanup:
+     return ret;
+ }
+ 
+-uint64_t HSHashDb(const PatternDatabase *pd)
++int HSHashDb(const PatternDatabase *pd, char *hash, size_t hash_len)
+ {
+-    uint32_t hash[2] = { 0 };
+-    hashword2(&pd->pattern_cnt, 1, &hash[0], &hash[1]);
++    SCSha256 *hasher = SCSha256New();
++    if (hasher == NULL) {
++        SCLogDebug("sha256 hashing failed");
++        return -1;
++    }
++    SCSha256Update(hasher, (const uint8_t *)&pd->pattern_cnt, sizeof(pd->pattern_cnt));
+     for (uint32_t i = 0; i < pd->pattern_cnt; i++) {
+-        SCHSCachePatternHash(pd->parray[i], &hash[0], &hash[1]);
++        SCHSCachePatternHash(pd->parray[i], hasher);
++    }
++
++    if (!SCSha256FinalizeToHex(hasher, hash, hash_len)) {
++        hasher = NULL;
++        SCLogDebug("sha256 hashing failed");
++        return -1;
+     }
+-    return ((uint64_t)hash[1] << 32) | hash[0];
++
++    hasher = NULL;
++    return 0;
+ }
+ 
+ void HSSaveCacheIterator(void *data, void *aux)
+@@ -244,7 +256,11 @@ void HSSaveCacheIterator(void *data, void *aux)
+         return;
+     }
+ 
+-    if (HSSaveCache(pd->hs_db, HSHashDb(pd), iter_data->cache_path) == 0) {
++    char hs_db_hash[SC_SHA256_LEN * 2 + 1]; // * 2 for hex +1 for nul terminator
++    if (HSHashDb(pd, hs_db_hash, ARRAY_SIZE(hs_db_hash)) != 0) {
++        return;
++    }
++    if (HSSaveCache(pd->hs_db, hs_db_hash, iter_data->cache_path) == 0) {
+         pd->cached = true; // for rule reloads
+         iter_data->pd_stats->hs_dbs_cache_saved_cnt++;
+     }
+diff --git a/src/util-mpm-hs-cache.h b/src/util-mpm-hs-cache.h
+index 237762d5a..225c5001a 100644
+--- a/src/util-mpm-hs-cache.h
++++ b/src/util-mpm-hs-cache.h
+@@ -35,8 +35,8 @@ struct HsIteratorData {
+     const char *cache_path;
+ };
+ 
+-int HSLoadCache(hs_database_t **hs_db, uint64_t hs_db_hash, const char *dirpath);
+-uint64_t HSHashDb(const PatternDatabase *pd);
++int HSLoadCache(hs_database_t **hs_db, const char *hs_db_hash, const char *dirpath);
++int HSHashDb(const PatternDatabase *pd, char *hash, size_t hash_len);
+ void HSSaveCacheIterator(void *data, void *aux);
+ #endif /* BUILD_HYPERSCAN */
+ 
+diff --git a/src/util-mpm-hs.c b/src/util-mpm-hs.c
+index dde5bf36a..ad7178eb8 100644
+--- a/src/util-mpm-hs.c
++++ b/src/util-mpm-hs.c
+@@ -683,8 +683,11 @@ static int PatternDatabaseGetCached(
+         return 0;
+     } else if (cache_dir_path) {
+         pd_cached = *pd;
+-        uint64_t db_lookup_hash = HSHashDb(pd_cached);
+-        if (HSLoadCache(&pd_cached->hs_db, db_lookup_hash, cache_dir_path) == 0) {
++        char hs_db_hash[SC_SHA256_LEN * 2 + 1]; // * 2 for hex +1 for nul terminator
++        if (HSHashDb(pd_cached, hs_db_hash, ARRAY_SIZE(hs_db_hash)) != 0) {
++            return -1;
++        }
++        if (HSLoadCache(&pd_cached->hs_db, hs_db_hash, cache_dir_path) == 0) {
+             pd_cached->ref_cnt = 1;
+             pd_cached->cached = true;
+             if (HSScratchAlloc(pd_cached->hs_db) != 0) {
+commit 3e4fdb2118bfcb8b2644944daded2d8c67420499
+Author: Lukas Sismis <lsismis@oisf.net>
+Date:   Sat Sep 13 11:23:16 2025 +0200
+
+    misc: time unit parsing function
+
+diff --git a/rust/Cargo.lock.in b/rust/Cargo.lock.in
+index d296a196e..d47cdd197 100644
+--- a/rust/Cargo.lock.in
++++ b/rust/Cargo.lock.in
+@@ -688,6 +688,12 @@ dependencies = [
+  "windows-sys 0.52.0",
+ ]
+ 
++[[package]]
++name = "humantime"
++version = "2.3.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "135b12329e5e3ce057a9f972339ea52bc954fe1e9358ef27f95e89716fbc5424"
++
+ [[package]]
+ name = "indexmap"
+ version = "2.11.4"
+@@ -1551,6 +1557,7 @@ dependencies = [
+  "flate2",
+  "hex",
+  "hkdf",
++ "humantime",
+  "ipsec-parser",
+  "kerberos-parser",
+  "lazy_static",
+diff --git a/rust/Cargo.toml.in b/rust/Cargo.toml.in
+index 0fedea33f..22e166062 100644
+--- a/rust/Cargo.toml.in
++++ b/rust/Cargo.toml.in
+@@ -77,6 +77,7 @@ lazy_static = "~1.5.0"
+ base64 = "~0.22.1"
+ bendy = { version = "~0.3.3", default-features = false }
+ asn1-rs = { version = "~0.6.2" }
++humantime = "~2.3.0"
+ ldap-parser = { version = "~0.5.0" }
+ hex = "~0.4.3"
+ psl = "2"
+diff --git a/rust/src/util.rs b/rust/src/util.rs
+index 9d45ae26d..2cb2da17c 100644
+--- a/rust/src/util.rs
++++ b/rust/src/util.rs
+@@ -17,6 +17,7 @@
+ 
+ //! Utility module.
+ 
++use std::borrow::Cow;
+ use std::ffi::CStr;
+ use std::os::raw::c_char;
+ 
+@@ -26,6 +27,8 @@ use nom8::combinator::verify;
+ use nom8::multi::many1_count;
+ use nom8::{AsChar, IResult, Parser};
+ 
++use humantime::parse_duration;
++
+ #[no_mangle]
+ pub unsafe extern "C" fn SCCheckUtf8(val: *const c_char) -> bool {
+     CStr::from_ptr(val).to_str().is_ok()
+@@ -63,10 +66,56 @@ pub unsafe extern "C" fn SCValidateDomain(input: *const u8, in_len: u32) -> u32
+     return 0;
+ }
+ 
++/// Add 's' suffix if input is only digits, and convert to lowercase if needed.
++fn duration_unit_normalize(input: &str) -> Cow<'_, str> {
++    if input.bytes().all(|b| b.is_ascii_digit()) {
++        let mut owned = String::with_capacity(input.len() + 1);
++        owned.push_str(input);
++        owned.push('s');
++        return Cow::Owned(owned);
++    }
++
++    if input.bytes().any(|b| b.is_ascii_uppercase()) {
++        Cow::Owned(input.to_ascii_lowercase())
++    } else {
++        Cow::Borrowed(input)
++    }
++}
++
++/// Reads a C string from `input`, parses it, and writes the result to `*res`.
++/// Returns 0 on success (result written to *res), -1 otherwise.
++#[no_mangle]
++pub unsafe extern "C" fn SCParseTimeDuration(input: *const c_char, res: *mut u64) -> i32 {
++    if input.is_null() || res.is_null() {
++        return -1;
++    }
++
++    let input_str = match CStr::from_ptr(input).to_str() {
++        Ok(s) => s,
++        Err(_) => return -1,
++    };
++
++    let trimmed = input_str.trim();
++    if trimmed.is_empty() {
++        return -1;
++    }
++
++    let normalized = duration_unit_normalize(trimmed);
++    match parse_duration(normalized.as_ref()) {
++        Ok(duration) => {
++            *res = duration.as_secs();
++            0
++        }
++        Err(_) => -1,
++    }
++}
++
+ #[cfg(test)]
+ mod tests {
+ 
+     use super::*;
++    use std::ffi::CString;
++    use std::ptr::{null, null_mut};
+ 
+     #[test]
+     fn test_parse_domain() {
+@@ -83,4 +132,73 @@ mod tests {
+         let buf1: &[u8] = "a(x)y.com".as_bytes();
+         assert!(parse_domain(buf1).is_err());
+     }
++
++    #[test]
++    fn test_parse_time_valid() {
++        unsafe {
++            let mut v: u64 = 0;
++
++            let s = CString::new("10").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), 0);
++            assert_eq!(v, 10);
++
++            let s = CString::new("0").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), 0);
++            assert_eq!(v, 0);
++
++            let s = CString::new("2H").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), 0);
++            assert_eq!(v, 7200);
++
++            let s = CString::new("1 day").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), 0);
++            assert_eq!(v, 86400);
++
++            let s = CString::new("1w").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), 0);
++            assert_eq!(v, 604800);
++
++            let s = CString::new("1 week").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), 0);
++            assert_eq!(v, 604800);
++
++            let s = CString::new("1y").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), 0);
++            assert_eq!(v, 31557600);
++
++            let s = CString::new("1 year").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), 0);
++            assert_eq!(v, 31557600);
++
++            // max
++            let s = CString::new("18446744073709551615").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), 0);
++            assert_eq!(v, u64::MAX);
++        }
++    }
++
++    #[test]
++    fn test_parse_time_duration_invalid() {
++        unsafe {
++            let mut v: u64 = 0;
++            let s = CString::new("10q").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), -1);
++
++            let s = CString::new("abc").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), -1);
++
++            let s = CString::new("-300s").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), -1);
++
++            let s = CString::new("1h -600s").unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), -1);
++
++            assert_eq!(SCParseTimeDuration(null(), &mut v), -1);
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), null_mut()), -1);
++
++            let overflow_years = (u64::MAX / 31557600) + 1;
++            let s = CString::new(format!("{}y", overflow_years)).unwrap();
++            assert_eq!(SCParseTimeDuration(s.as_ptr(), &mut v), -1);
++        }
++    }
+ }
+diff --git a/rust/sys/src/sys.rs b/rust/sys/src/sys.rs
+index 3dbd2293e..7be2a12b4 100644
+--- a/rust/sys/src/sys.rs
++++ b/rust/sys/src/sys.rs
+@@ -701,6 +701,11 @@ extern "C" {
+         name: *const ::std::os::raw::c_char, val: *mut f32,
+     ) -> ::std::os::raw::c_int;
+ }
++extern "C" {
++    pub fn SCConfGetTime(
++        name: *const ::std::os::raw::c_char, val: *mut u64,
++    ) -> ::std::os::raw::c_int;
++}
+ extern "C" {
+     pub fn SCConfSet(
+         name: *const ::std::os::raw::c_char, val: *const ::std::os::raw::c_char,
+commit 85f0382072173c226426d4556a9d959ab0a90c34
+Author: Lukas Sismis <lsismis@oisf.net>
+Date:   Sat Sep 13 23:55:02 2025 +0200
+
+    conf: add time parsing conf function
+
+diff --git a/src/conf.c b/src/conf.c
+index 3be82529d..c81da37b4 100644
+--- a/src/conf.c
++++ b/src/conf.c
+@@ -42,6 +42,7 @@
+ #include "util-debug.h"
+ #include "util-path.h"
+ #include "util-conf.h"
++#include "rust.h"
+ 
+ /** Maximum size of a complete domain name. */
+ #define NODE_NAME_MAX 1024
+@@ -647,6 +648,36 @@ int SCConfGetFloat(const char *name, float *val)
+     return 1;
+ }
+ 
++/**
++ * \brief Retrieve a configuration value as a time duration in seconds.
++ *
++ * The configuration value is expected to be a string with a number
++ * followed by an optional time-describing unit (e.g. s, seconds, weeks, years).
++ * If no unit is specified, seconds are assumed.
++ *
++ * \param name Name of configuration parameter to get.
++ * \param val Pointer to an uint64_t that will be set the
++ * configuration value in seconds.
++ *
++ * \retval 1 will be returned if the name is found and was properly
++ * converted to a time duration, otherwise 0 will be returned.
++ */
++int SCConfGetTime(const char *name, uint64_t *val)
++{
++    const char *strval = NULL;
++
++    if (SCConfGet(name, &strval) == 0)
++        return 0;
++
++    if (strval == NULL || strval[0] == '\0')
++        return 0;
++
++    if (SCParseTimeDuration(strval, val) != 0)
++        return 0;
++
++    return 1;
++}
++
+ /**
+  * \brief Remove (and SCFree) the provided configuration node.
+  */
+diff --git a/src/conf.h b/src/conf.h
+index 348138998..0f3a881ac 100644
+--- a/src/conf.h
++++ b/src/conf.h
+@@ -67,6 +67,7 @@ int SCConfGetInt(const char *name, intmax_t *val);
+ int SCConfGetBool(const char *name, int *val);
+ int SCConfGetDouble(const char *name, double *val);
+ int SCConfGetFloat(const char *name, float *val);
++int SCConfGetTime(const char *name, uint64_t *val);
+ int SCConfSet(const char *name, const char *val);
+ int SCConfSetFromString(const char *input, int final);
+ int SCConfSetFinal(const char *name, const char *val);
+commit fd3847db728536f6b345c33542f98a72fc058e8b
+Author: Lukas Sismis <lsismis@oisf.net>
+Date:   Mon Sep 15 11:36:01 2025 +0200
+
+    path: signal last use of the file (touch)
+    
+    To have a system-level overview of when was the last time the file was
+    used, update the file modification timestamp to to the current time.
+    
+    This is needed to remove stale cache files of the system.
+    
+    Access time is not used as it may be, on the system level, disabled.
+    
+    Ticket: 7830
+
+diff --git a/src/util-path.c b/src/util-path.c
+index 356c4a772..cde5a67ff 100644
+--- a/src/util-path.c
++++ b/src/util-path.c
+@@ -277,3 +277,23 @@ bool SCPathContainsTraversal(const char *path)
+ #endif
+     return strstr(path, pattern) != NULL;
+ }
++
++/**
++ * \brief Update access and modification time of an existing file to 'now'.
++ * \param path The file path to touch
++ * \retval 0 on success, -1 on failure
++ */
++int SCTouchFile(const char *path)
++{
++    if (path == NULL || path[0] == '\0') {
++        errno = EINVAL;
++        return -1;
++    }
++#ifndef OS_WIN32
++    struct utimbuf ub;
++    ub.actime = ub.modtime = time(NULL);
++    if (utime(path, &ub) == 0)
++        return 0;
++#endif
++    return -1;
++}
+diff --git a/src/util-path.h b/src/util-path.h
+index b2b262490..e835d847d 100644
+--- a/src/util-path.h
++++ b/src/util-path.h
+@@ -59,5 +59,6 @@ bool SCIsRegularFile(const struct dirent *const dir_entry);
+ char *SCRealPath(const char *path, char *resolved_path);
+ const char *SCBasename(const char *path);
+ bool SCPathContainsTraversal(const char *path);
++int SCTouchFile(const char *path);
+ 
+ #endif /* SURICATA_UTIL_PATH_H */
+commit 7031c268655aec5c44420902bbda6f7aea8eba33
+Author: Lukas Sismis <lsismis@oisf.net>
+Date:   Mon Sep 15 11:39:02 2025 +0200
+
+    hs: touch cache files on use to signal activity
+    
+    Ticket: 7830
+
+diff --git a/src/util-mpm-hs-cache.c b/src/util-mpm-hs-cache.c
+index 83bbee59c..41b308171 100644
+--- a/src/util-mpm-hs-cache.c
++++ b/src/util-mpm-hs-cache.c
+@@ -150,6 +150,10 @@ int HSLoadCache(hs_database_t **hs_db, const char *hs_db_hash, const char *dirpa
+         }
+ 
+         ret = 0;
++        /* Touch file to update modification time so active caches are retained. */
++        if (SCTouchFile(hash_file_static) != 0) {
++            SCLogDebug("Failed to update mtime for %s", hash_file_static);
++        }
+         goto freeup;
+     }
+ 
+commit 08f5abe5e967bbcfbc0c11a797ef86125afd3db8
+Author: Lukas Sismis <lsismis@oisf.net>
+Date:   Sun Dec 28 00:09:29 2025 +0100
+
+    detect-engine: make mpm & spm part of MT stub ctx
+    
+    As a intermediary step for Hyperscan (MPM) caching,
+    the MPM config initialization should be part of the default
+    detect engine context for later dynamic retrieval.
+    
+    Ticket: 7830
+
+diff --git a/src/detect-engine.c b/src/detect-engine.c
+index b6d2d4237..12b1683c5 100644
+--- a/src/detect-engine.c
++++ b/src/detect-engine.c
+@@ -2495,6 +2495,20 @@ static DetectEngineCtx *DetectEngineCtxInitReal(
+     de_ctx->filemagic_thread_ctx_id = -1;
+     de_ctx->tenant_id = tenant_id;
+ 
++    de_ctx->mpm_matcher = PatternMatchDefaultMatcher();
++    de_ctx->spm_matcher = SinglePatternMatchDefaultMatcher();
++
++    if (mpm_table[de_ctx->mpm_matcher].ConfigInit) {
++        de_ctx->mpm_cfg = mpm_table[de_ctx->mpm_matcher].ConfigInit();
++        if (de_ctx->mpm_cfg == NULL) {
++            goto error;
++        }
++    }
++    if (DetectEngineMpmCachingEnabled() && mpm_table[de_ctx->mpm_matcher].ConfigCacheDirSet) {
++        mpm_table[de_ctx->mpm_matcher].ConfigCacheDirSet(
++                de_ctx->mpm_cfg, DetectEngineMpmCachingGetPath());
++    }
++
+     if (type == DETECT_ENGINE_TYPE_DD_STUB || type == DETECT_ENGINE_TYPE_MT_STUB) {
+         de_ctx->version = DetectEngineGetVersion();
+         SCLogDebug("stub %u with version %u", type, de_ctx->version);
+@@ -2511,23 +2525,8 @@ static DetectEngineCtx *DetectEngineCtxInitReal(
+     }
+     de_ctx->failure_fatal = (failure_fatal == 1);
+ 
+-    de_ctx->mpm_matcher = PatternMatchDefaultMatcher();
+-    de_ctx->spm_matcher = SinglePatternMatchDefaultMatcher();
+-    SCLogConfig("pattern matchers: MPM: %s, SPM: %s",
+-        mpm_table[de_ctx->mpm_matcher].name,
+-        spm_table[de_ctx->spm_matcher].name);
+-
+-    if (mpm_table[de_ctx->mpm_matcher].ConfigInit) {
+-        de_ctx->mpm_cfg = mpm_table[de_ctx->mpm_matcher].ConfigInit();
+-        if (de_ctx->mpm_cfg == NULL) {
+-            goto error;
+-        }
+-    }
+-    if (DetectEngineMpmCachingEnabled() && mpm_table[de_ctx->mpm_matcher].ConfigCacheDirSet) {
+-        mpm_table[de_ctx->mpm_matcher].ConfigCacheDirSet(
+-                de_ctx->mpm_cfg, DetectEngineMpmCachingGetPath());
+-    }
+-
++    SCLogConfig("pattern matchers: MPM: %s, SPM: %s", mpm_table[de_ctx->mpm_matcher].name,
++            spm_table[de_ctx->spm_matcher].name);
+     de_ctx->spm_global_thread_ctx = SpmInitGlobalThreadCtx(de_ctx->spm_matcher);
+     if (de_ctx->spm_global_thread_ctx == NULL) {
+         SCLogDebug("Unable to alloc SpmGlobalThreadCtx.");
+commit 15c83be61ac3f47bf198fe24eb908db5a84b7ccd
+Author: Lukas Sismis <lsismis@oisf.net>
+Date:   Mon Sep 15 11:24:23 2025 +0200
+
+    hs: prune stale MPM cache files
+    
+    Hyperscan MPM can cache the compiled contexts to files.
+    This however grows as rulesets change and leads to bloating
+    the system. This addition prunes the stale cache files based
+    on their modified file timestamp.
+    
+    Part of this work incorporates new model for MPM cache stats
+    to split it out from the cache save function and aggregate
+    cache-related stats in one place (newly added pruning).
+    
+    Ticket: 7830
+
+diff --git a/doc/userguide/performance/hyperscan.rst b/doc/userguide/performance/hyperscan.rst
+index 065163110..1060d3aef 100644
+--- a/doc/userguide/performance/hyperscan.rst
++++ b/doc/userguide/performance/hyperscan.rst
+@@ -83,6 +83,8 @@ if it is present on the system in case of the "auto" setting.
+ If the current suricata installation does not have hyperscan
+ support, refer to :ref:`installation`
+ 
++.. _hyperscan-cache-configuration:
++
+ Hyperscan caching
+ ~~~~~~~~~~~~~~~~~
+ 
+@@ -104,6 +106,24 @@ To enable this function, in `suricata.yaml` configure:
+     sgh-mpm-caching-path: /var/lib/suricata/cache/hs
+ 
+ 
++To avoid cache files growing indefinitely, Suricata supports pruning of old
++cache files. Suricata removes cache files older than the specified age
++on startup/rule reloads, where age is determined by delta of the file
++modification time and the current time.
++Cache files that are actively being used will have their modification time
++updated when loaded, so they won't be deleted.
++
++In `suricata.yaml` configure:
++
++::
++
++  detect:
++    sgh-mpm-caching-max-age: 7d
++
++The setting accepts a combination of time units (s,m,h,d,w,y),
++e.g. `1w 3d 12h` for 1 week, 3 days and 12 hours. Setting the value to `0`
++disables pruning.
++
+ **Note**:
+ You might need to create and adjust permissions to the default caching folder
+ path, especially if you are running Suricata as a non-root user.
+diff --git a/doc/userguide/upgrade.rst b/doc/userguide/upgrade.rst
+index ef8d1e369..054e3eb38 100644
+--- a/doc/userguide/upgrade.rst
++++ b/doc/userguide/upgrade.rst
+@@ -68,6 +68,10 @@ Other Changes
+   from unbounded to 2048. Configuration options, ``max-tx``,
+   ``max-points``, and ``max-objects`` have been added for users who
+   may need to change these defaults.
++- Hyperscan caching (`detect.sgh-mpm-caching`), when enabled, prunes
++  cache files that have not been used in the last 7 days by default.
++  See :ref:`Hyperscan caching configuration
++  <hyperscan-cache-configuration>` for more information.
+ 
+ Upgrading to 8.0.1
+ ------------------
+diff --git a/src/detect-engine-loader.c b/src/detect-engine-loader.c
+index ef0e8ef13..a97ebd6d2 100644
+--- a/src/detect-engine-loader.c
++++ b/src/detect-engine-loader.c
+@@ -502,10 +502,6 @@ skip_regular_rules:
+ 
+     ret = 0;
+ 
+-    if (mpm_table[de_ctx->mpm_matcher].CacheRuleset != NULL) {
+-        mpm_table[de_ctx->mpm_matcher].CacheRuleset(de_ctx->mpm_cfg);
+-    }
+-
+  end:
+     gettimeofday(&de_ctx->last_reload, NULL);
+     if (SCRunmodeGet() == RUNMODE_ENGINE_ANALYSIS) {
+diff --git a/src/detect-engine.c b/src/detect-engine.c
+index 12b1683c5..28e0bc14a 100644
+--- a/src/detect-engine.c
++++ b/src/detect-engine.c
+@@ -2481,6 +2481,49 @@ const char *DetectEngineMpmCachingGetPath(void)
+     return SGH_CACHE_DIR;
+ }
+ 
++void DetectEngineMpmCacheService(uint32_t op_flags)
++{
++    DetectEngineCtx *de_ctx = DetectEngineGetCurrent();
++    if (!de_ctx) {
++        return;
++    }
++
++    if (!de_ctx->mpm_cfg || !de_ctx->mpm_cfg->cache_dir_path) {
++        goto error;
++    }
++
++    if (mpm_table[de_ctx->mpm_matcher].CacheStatsInit != NULL) {
++        de_ctx->mpm_cfg->cache_stats = mpm_table[de_ctx->mpm_matcher].CacheStatsInit();
++        if (de_ctx->mpm_cfg->cache_stats == NULL) {
++            goto error;
++        }
++    }
++
++    if (op_flags & DETECT_ENGINE_MPM_CACHE_OP_SAVE) {
++        if (mpm_table[de_ctx->mpm_matcher].CacheRuleset != NULL) {
++            mpm_table[de_ctx->mpm_matcher].CacheRuleset(de_ctx->mpm_cfg);
++        }
++    }
++
++    if (op_flags & DETECT_ENGINE_MPM_CACHE_OP_PRUNE) {
++        if (mpm_table[de_ctx->mpm_matcher].CachePrune != NULL) {
++            mpm_table[de_ctx->mpm_matcher].CachePrune(de_ctx->mpm_cfg);
++        }
++    }
++
++    if (mpm_table[de_ctx->mpm_matcher].CacheStatsPrint != NULL) {
++        mpm_table[de_ctx->mpm_matcher].CacheStatsPrint(de_ctx->mpm_cfg->cache_stats);
++    }
++
++    if (mpm_table[de_ctx->mpm_matcher].CacheStatsDeinit != NULL) {
++        mpm_table[de_ctx->mpm_matcher].CacheStatsDeinit(de_ctx->mpm_cfg->cache_stats);
++        de_ctx->mpm_cfg->cache_stats = NULL;
++    }
++
++error:
++    DetectEngineDeReference(&de_ctx);
++}
++
+ static DetectEngineCtx *DetectEngineCtxInitReal(
+         enum DetectEngineType type, const char *prefix, uint32_t tenant_id)
+ {
+@@ -2503,10 +2546,18 @@ static DetectEngineCtx *DetectEngineCtxInitReal(
+         if (de_ctx->mpm_cfg == NULL) {
+             goto error;
+         }
+-    }
+-    if (DetectEngineMpmCachingEnabled() && mpm_table[de_ctx->mpm_matcher].ConfigCacheDirSet) {
+-        mpm_table[de_ctx->mpm_matcher].ConfigCacheDirSet(
+-                de_ctx->mpm_cfg, DetectEngineMpmCachingGetPath());
++
++        if (DetectEngineMpmCachingEnabled() && mpm_table[de_ctx->mpm_matcher].ConfigCacheDirSet) {
++            mpm_table[de_ctx->mpm_matcher].ConfigCacheDirSet(
++                    de_ctx->mpm_cfg, DetectEngineMpmCachingGetPath());
++
++            if (mpm_table[de_ctx->mpm_matcher].CachePrune) {
++                if (SCConfGetTime("detect.sgh-mpm-caching-max-age",
++                            &de_ctx->mpm_cfg->cache_max_age_seconds) != 1) {
++                    de_ctx->mpm_cfg->cache_max_age_seconds = 7ULL * 24ULL * 60ULL * 60ULL;
++                }
++            }
++        }
+     }
+ 
+     if (type == DETECT_ENGINE_TYPE_DD_STUB || type == DETECT_ENGINE_TYPE_MT_STUB) {
+@@ -4885,6 +4936,8 @@ int DetectEngineReload(const SCInstance *suri)
+ 
+     SCLogDebug("old_de_ctx should have been freed");
+ 
++    DetectEngineMpmCacheService(DETECT_ENGINE_MPM_CACHE_OP_SAVE | DETECT_ENGINE_MPM_CACHE_OP_PRUNE);
++
+     SCLogNotice("rule reload complete");
+ 
+ #ifdef HAVE_MALLOC_TRIM
+diff --git a/src/detect-engine.h b/src/detect-engine.h
+index 2c56475f6..2d45d3253 100644
+--- a/src/detect-engine.h
++++ b/src/detect-engine.h
+@@ -88,6 +88,7 @@ TmEcode DetectEngineThreadCtxInit(ThreadVars *, void *, void **);
+ TmEcode DetectEngineThreadCtxDeinit(ThreadVars *, void *);
+ bool DetectEngineMpmCachingEnabled(void);
+ const char *DetectEngineMpmCachingGetPath(void);
++void DetectEngineMpmCacheService(uint32_t op_flags);
+ /* faster as a macro than a inline function on my box -- VJ */
+ #define DetectEngineGetMaxSigId(de_ctx) ((de_ctx)->signum)
+ void DetectEngineResetMaxSigId(DetectEngineCtx *);
+diff --git a/src/detect.h b/src/detect.h
+index 62c888e6a..49fbfe3eb 100644
+--- a/src/detect.h
++++ b/src/detect.h
+@@ -1750,6 +1750,9 @@ extern SigTableElmt *sigmatch_table;
+ 
+ /** Remember to add the options in SignatureIsIPOnly() at detect.c otherwise it wont be part of a signature group */
+ 
++#define DETECT_ENGINE_MPM_CACHE_OP_PRUNE BIT_U32(0)
++#define DETECT_ENGINE_MPM_CACHE_OP_SAVE  BIT_U32(1)
++
+ /* detection api */
+ TmEcode Detect(ThreadVars *tv, Packet *p, void *data);
+ uint8_t DetectPreFlow(ThreadVars *tv, DetectEngineThreadCtx *det_ctx, Packet *p);
+diff --git a/src/runmode-unix-socket.c b/src/runmode-unix-socket.c
+index c2405f057..706a35b7e 100644
+--- a/src/runmode-unix-socket.c
++++ b/src/runmode-unix-socket.c
+@@ -967,6 +967,8 @@ TmEcode UnixSocketRegisterTenantHandler(json_t *cmd, json_t* answer, void *data)
+         return TM_ECODE_FAILED;
+     }
+ 
++    DetectEngineMpmCacheService(DETECT_ENGINE_MPM_CACHE_OP_SAVE);
++
+     json_object_set_new(answer, "message", json_string("handler added"));
+     return TM_ECODE_OK;
+ }
+@@ -1054,6 +1056,8 @@ TmEcode UnixSocketUnregisterTenantHandler(json_t *cmd, json_t* answer, void *dat
+         return TM_ECODE_FAILED;
+     }
+ 
++    DetectEngineMpmCacheService(DETECT_ENGINE_MPM_CACHE_OP_PRUNE);
++
+     json_object_set_new(answer, "message", json_string("handler removed"));
+     return TM_ECODE_OK;
+ }
+@@ -1126,6 +1130,8 @@ TmEcode UnixSocketRegisterTenant(json_t *cmd, json_t* answer, void *data)
+         return TM_ECODE_FAILED;
+     }
+ 
++    DetectEngineMpmCacheService(DETECT_ENGINE_MPM_CACHE_OP_SAVE);
++
+     json_object_set_new(answer, "message", json_string("adding tenant succeeded"));
+     return TM_ECODE_OK;
+ }
+@@ -1193,6 +1199,8 @@ TmEcode UnixSocketReloadTenant(json_t *cmd, json_t* answer, void *data)
+         return TM_ECODE_FAILED;
+     }
+ 
++    DetectEngineMpmCacheService(DETECT_ENGINE_MPM_CACHE_OP_SAVE | DETECT_ENGINE_MPM_CACHE_OP_PRUNE);
++
+     json_object_set_new(answer, "message", json_string("reloading tenant succeeded"));
+     return TM_ECODE_OK;
+ }
+@@ -1226,6 +1234,7 @@ TmEcode UnixSocketReloadTenants(json_t *cmd, json_t *answer, void *data)
+         return TM_ECODE_FAILED;
+     }
+ 
++    DetectEngineMpmCacheService(DETECT_ENGINE_MPM_CACHE_OP_SAVE | DETECT_ENGINE_MPM_CACHE_OP_PRUNE);
+     SCLogNotice("reload-tenants complete");
+ 
+     json_object_set_new(answer, "message", json_string("reloading tenants succeeded"));
+@@ -1284,6 +1293,8 @@ TmEcode UnixSocketUnregisterTenant(json_t *cmd, json_t* answer, void *data)
+         return TM_ECODE_FAILED;
+     }
+ 
++    DetectEngineMpmCacheService(DETECT_ENGINE_MPM_CACHE_OP_PRUNE);
++
+     /* walk free list, freeing the removed de_ctx */
+     DetectEnginePruneFreeList();
+ 
+diff --git a/src/suricata.c b/src/suricata.c
+index c6f94c3ce..a106c56f7 100644
+--- a/src/suricata.c
++++ b/src/suricata.c
+@@ -2688,6 +2688,8 @@ void PostConfLoadedDetectSetup(SCInstance *suri)
+         gettimeofday(&de_ctx->last_reload, NULL);
+         DetectEngineAddToMaster(de_ctx);
+         DetectEngineBumpVersion();
++        DetectEngineMpmCacheService(
++                DETECT_ENGINE_MPM_CACHE_OP_SAVE | DETECT_ENGINE_MPM_CACHE_OP_PRUNE);
+     }
+ }
+ 
+diff --git a/src/util-mpm-hs-cache.c b/src/util-mpm-hs-cache.c
+index 41b308171..58a2aa6ab 100644
+--- a/src/util-mpm-hs-cache.c
++++ b/src/util-mpm-hs-cache.c
+@@ -37,21 +37,22 @@
+ #include "rust.h"
+ #include <hs.h>
+ 
+-static const char *HSCacheConstructFPath(const char *folder_path, const char *hs_db_hash)
+-{
+-    static char hash_file_path[PATH_MAX];
++#define HS_CACHE_FILE_VERSION "2"
++#define HS_CACHE_FILE_SUFFIX  "_v" HS_CACHE_FILE_VERSION ".hs"
+ 
+-    char hash_file_path_suffix[] = "_v1.hs";
++static int16_t HSCacheConstructFPath(
++        const char *dir_path, const char *db_hash, char *out_path, uint16_t out_path_size)
++{
+     char filename[NAME_MAX];
+-    uint64_t r = snprintf(filename, sizeof(filename), "%s%s", hs_db_hash, hash_file_path_suffix);
+-    if (r != (uint64_t)(strlen(hs_db_hash) + strlen(hash_file_path_suffix)))
+-        return NULL;
++    uint64_t r = snprintf(filename, sizeof(filename), "%s" HS_CACHE_FILE_SUFFIX, db_hash);
++    if (r != (uint64_t)(strlen(db_hash) + strlen(HS_CACHE_FILE_SUFFIX)))
++        return -1;
+ 
+-    r = PathMerge(hash_file_path, sizeof(hash_file_path), folder_path, filename);
++    r = PathMerge(out_path, out_path_size, dir_path, filename);
+     if (r)
+-        return NULL;
++        return -1;
+ 
+-    return hash_file_path;
++    return 0;
+ }
+ 
+ static char *HSReadStream(const char *file_path, size_t *buffer_sz)
+@@ -121,8 +122,11 @@ static void SCHSCachePatternHash(const SCHSPattern *p, SCSha256 *sha256)
+ 
+ int HSLoadCache(hs_database_t **hs_db, const char *hs_db_hash, const char *dirpath)
+ {
+-    const char *hash_file_static = HSCacheConstructFPath(dirpath, hs_db_hash);
+-    if (hash_file_static == NULL)
++    char hash_file_static[PATH_MAX];
++    int ret = (int)HSCacheConstructFPath(
++            dirpath, hs_db_hash, hash_file_static, sizeof(hash_file_static));
++
++    if (ret != 0)
+         return -1;
+ 
+     SCLogDebug("Loading the cached HS DB from %s", hash_file_static);
+@@ -131,7 +135,6 @@ int HSLoadCache(hs_database_t **hs_db, const char *hs_db_hash, const char *dirpa
+ 
+     FILE *db_cache = fopen(hash_file_static, "r");
+     char *buffer = NULL;
+-    int ret = 0;
+     if (db_cache) {
+         size_t buffer_size;
+         buffer = HSReadStream(hash_file_static, &buffer_size);
+@@ -170,15 +173,20 @@ static int HSSaveCache(hs_database_t *hs_db, const char *hs_db_hash, const char
+     static bool notified = false;
+     char *db_stream = NULL;
+     size_t db_size;
+-    int ret = -1;
++    int ret;
+ 
+     hs_error_t err = hs_serialize_database(hs_db, &db_stream, &db_size);
+     if (err != HS_SUCCESS) {
+         SCLogWarning("Failed to serialize Hyperscan database: %s", HSErrorToStr(err));
++        ret = -1;
+         goto cleanup;
+     }
+ 
+-    const char *hash_file_static = HSCacheConstructFPath(dstpath, hs_db_hash);
++    char hash_file_static[PATH_MAX];
++    ret = (int)HSCacheConstructFPath(
++            dstpath, hs_db_hash, hash_file_static, sizeof(hash_file_static));
++    if (ret != 0)
++        goto cleanup;
+     SCLogDebug("Caching the compiled HS at %s", hash_file_static);
+     if (SCPathExists(hash_file_static)) {
+         // potentially signs that it might not work as expected as we got into
+@@ -198,6 +206,7 @@ static int HSSaveCache(hs_database_t *hs_db, const char *hs_db_hash, const char
+                     hash_file_static);
+             notified = true;
+         }
++        ret = -1;
+         goto cleanup;
+     }
+     size_t r = fwrite(db_stream, sizeof(db_stream[0]), db_size, db_cache_out);
+@@ -217,7 +226,6 @@ static int HSSaveCache(hs_database_t *hs_db, const char *hs_db_hash, const char
+         goto cleanup;
+     }
+ 
+-    ret = 0;
+ cleanup:
+     if (db_stream)
+         SCFree(db_stream);
+@@ -270,4 +278,187 @@ void HSSaveCacheIterator(void *data, void *aux)
+     }
+ }
+ 
++void HSCacheFilenameUsedIterator(void *data, void *aux)
++{
++    PatternDatabase *pd = (PatternDatabase *)data;
++    struct HsInUseCacheFilesIteratorData *iter_data = (struct HsInUseCacheFilesIteratorData *)aux;
++    if (pd->no_cache || !pd->cached)
++        return;
++
++    char hs_db_hash[SC_SHA256_LEN * 2 + 1]; // * 2 for hex +1 for nul terminator
++    if (HSHashDb(pd, hs_db_hash, ARRAY_SIZE(hs_db_hash)) != 0) {
++        return;
++    }
++
++    char *fpath = SCCalloc(PATH_MAX, sizeof(char));
++    if (fpath == NULL) {
++        SCLogWarning("Failed to allocate memory for cache file path");
++        return;
++    }
++    if (HSCacheConstructFPath(iter_data->cache_path, hs_db_hash, fpath, PATH_MAX)) {
++        SCFree(fpath);
++        return;
++    }
++
++    int r = HashTableAdd(iter_data->tbl, (void *)fpath, (uint16_t)strlen(fpath));
++    if (r < 0) {
++        SCLogWarning("Failed to add used cache file path %s to hash table", fpath);
++        SCFree(fpath);
++    }
++}
++
++/**
++ * \brief Check if HS cache file is stale by age.
++ *
++ * \param mtime   File modification time.
++ * \param cutoff  Time cutoff (files older than this will be removed).
++ *
++ * \retval true if file should be pruned, false otherwise.
++ */
++static bool HSPruneFileByAge(time_t mtime, time_t cutoff)
++{
++    return mtime < cutoff;
++}
++
++/**
++ * \brief Check if HS cache file is version-compatible.
++ *
++ * \param filename  Cache file name.
++ *
++ * \retval true if file should be pruned, false otherwise.
++ */
++static bool HSPruneFileByVersion(const char *filename)
++{
++    if (strlen(filename) < strlen(HS_CACHE_FILE_SUFFIX)) {
++        return true;
++    }
++
++    const char *underscore = strrchr(filename, '_');
++    if (underscore == NULL || strcmp(underscore, HS_CACHE_FILE_SUFFIX) != 0) {
++        return true;
++    }
++
++    return false;
++}
++
++int SCHSCachePruneEvaluate(MpmConfig *mpm_conf, HashTable *inuse_caches)
++{
++    if (mpm_conf == NULL || mpm_conf->cache_dir_path == NULL)
++        return -1;
++    if (mpm_conf->cache_max_age_seconds == 0)
++        return 0; // disabled
++
++    const time_t now = time(NULL);
++    if (now == (time_t)-1) {
++        return -1;
++    } else if (mpm_conf->cache_max_age_seconds >= (uint64_t)now) {
++        return 0;
++    }
++
++    DIR *dir = opendir(mpm_conf->cache_dir_path);
++    if (dir == NULL) {
++        return -1;
++    }
++
++    struct dirent *ent;
++    char path[PATH_MAX];
++    uint32_t considered = 0, removed = 0;
++    const time_t cutoff = now - (time_t)mpm_conf->cache_max_age_seconds;
++    while ((ent = readdir(dir)) != NULL) {
++        const char *name = ent->d_name;
++        size_t namelen = strlen(name);
++        if (namelen < 3 || strcmp(name + namelen - 3, ".hs") != 0)
++            continue;
++
++        if (PathMerge(path, ARRAY_SIZE(path), mpm_conf->cache_dir_path, name) != 0)
++            continue;
++
++        struct stat st;
++        if (stat(path, &st) != 0 || !S_ISREG(st.st_mode))
++            continue;
++
++        considered++;
++
++        const bool prune_by_age = HSPruneFileByAge(st.st_mtime, cutoff);
++        const bool prune_by_version = HSPruneFileByVersion(name);
++        if (!prune_by_age && !prune_by_version)
++            continue;
++
++        void *cache_inuse = HashTableLookup(inuse_caches, path, (uint16_t)strlen(path));
++        if (cache_inuse != NULL)
++            continue; // in use
++
++        if (unlink(path) == 0) {
++            removed++;
++            SCLogDebug("File %s removed because of %s%s%s", path, prune_by_age ? "age" : "",
++                    prune_by_age && prune_by_version ? " and " : "",
++                    prune_by_version ? "incompatible version" : "");
++        } else {
++            SCLogWarning("Failed to prune \"%s\": %s", path, strerror(errno));
++        }
++    }
++    closedir(dir);
++
++    PatternDatabaseCache *pd_cache_stats = mpm_conf->cache_stats;
++    if (pd_cache_stats) {
++        pd_cache_stats->hs_dbs_cache_pruned_cnt = removed;
++        pd_cache_stats->hs_dbs_cache_pruned_considered_cnt = considered;
++        pd_cache_stats->hs_dbs_cache_pruned_cutoff = cutoff;
++        pd_cache_stats->cache_max_age_seconds = mpm_conf->cache_max_age_seconds;
++    }
++    return 0;
++}
++
++void *SCHSCacheStatsInit(void)
++{
++    PatternDatabaseCache *pd_cache_stats = SCCalloc(1, sizeof(PatternDatabaseCache));
++    if (pd_cache_stats == NULL) {
++        SCLogError("Failed to allocate memory for Hyperscan cache stats");
++        return NULL;
++    }
++    return pd_cache_stats;
++}
++
++void SCHSCacheStatsPrint(void *data)
++{
++    if (data == NULL) {
++        return;
++    }
++
++    PatternDatabaseCache *pd_cache_stats = (PatternDatabaseCache *)data;
++
++    char time_str[64];
++    struct tm tm_s;
++    struct tm *tm_info = SCLocalTime(pd_cache_stats->hs_dbs_cache_pruned_cutoff, &tm_s);
++    if (tm_info != NULL) {
++        strftime(time_str, ARRAY_SIZE(time_str), "%Y-%m-%d %H:%M:%S", tm_info);
++    } else {
++        snprintf(time_str, ARRAY_SIZE(time_str), "%" PRIu64 " seconds",
++                pd_cache_stats->cache_max_age_seconds);
++    }
++
++    if (pd_cache_stats->hs_cacheable_dbs_cnt) {
++        SCLogInfo("Rule group caching - loaded: %u newly cached: %u total cacheable: %u",
++                pd_cache_stats->hs_dbs_cache_loaded_cnt, pd_cache_stats->hs_dbs_cache_saved_cnt,
++                pd_cache_stats->hs_cacheable_dbs_cnt);
++    }
++    if (pd_cache_stats->hs_dbs_cache_pruned_considered_cnt) {
++        SCLogInfo("Rule group cache pruning removed %u/%u of HS caches due to "
++                  "version-incompatibility (not v%s) or "
++                  "age (older than %s)",
++                pd_cache_stats->hs_dbs_cache_pruned_cnt,
++                pd_cache_stats->hs_dbs_cache_pruned_considered_cnt, HS_CACHE_FILE_VERSION,
++                time_str);
++    }
++}
++
++void SCHSCacheStatsDeinit(void *data)
++{
++    if (data == NULL) {
++        return;
++    }
++    PatternDatabaseCache *pd_cache_stats = (PatternDatabaseCache *)data;
++    SCFree(pd_cache_stats);
++}
++
+ #endif /* BUILD_HYPERSCAN */
+diff --git a/src/util-mpm-hs-cache.h b/src/util-mpm-hs-cache.h
+index 225c5001a..24b4eece0 100644
+--- a/src/util-mpm-hs-cache.h
++++ b/src/util-mpm-hs-cache.h
+@@ -35,9 +35,24 @@ struct HsIteratorData {
+     const char *cache_path;
+ };
+ 
++/**
++ * \brief Data structure to store in-use cache files.
++ * Used in cache pruning to avoid deleting files that are still in use.
++ */
++struct HsInUseCacheFilesIteratorData {
++    HashTable *tbl; // stores file paths of in-use cache files
++    const char *cache_path;
++};
++
+ int HSLoadCache(hs_database_t **hs_db, const char *hs_db_hash, const char *dirpath);
+ int HSHashDb(const PatternDatabase *pd, char *hash, size_t hash_len);
+ void HSSaveCacheIterator(void *data, void *aux);
++void HSCacheFilenameUsedIterator(void *data, void *aux);
++int SCHSCachePruneEvaluate(MpmConfig *mpm_conf, HashTable *inuse_caches);
++
++void *SCHSCacheStatsInit(void);
++void SCHSCacheStatsPrint(void *data);
++void SCHSCacheStatsDeinit(void *data);
+ #endif /* BUILD_HYPERSCAN */
+ 
+ #endif /* SURICATA_UTIL_MPM_HS_CACHE__H */
+diff --git a/src/util-mpm-hs-core.h b/src/util-mpm-hs-core.h
+index 699dd6956..8392127cf 100644
+--- a/src/util-mpm-hs-core.h
++++ b/src/util-mpm-hs-core.h
+@@ -93,6 +93,10 @@ typedef struct PatternDatabaseCache_ {
+     uint32_t hs_cacheable_dbs_cnt;
+     uint32_t hs_dbs_cache_loaded_cnt;
+     uint32_t hs_dbs_cache_saved_cnt;
++    uint32_t hs_dbs_cache_pruned_cnt;
++    uint32_t hs_dbs_cache_pruned_considered_cnt;
++    time_t hs_dbs_cache_pruned_cutoff;
++    uint64_t cache_max_age_seconds;
+ } PatternDatabaseCache;
+ 
+ const char *HSErrorToStr(hs_error_t error_code);
+diff --git a/src/util-mpm-hs.c b/src/util-mpm-hs.c
+index ad7178eb8..df4a66b2e 100644
+--- a/src/util-mpm-hs.c
++++ b/src/util-mpm-hs.c
+@@ -835,18 +835,53 @@ static int SCHSCacheRuleset(MpmConfig *mpm_conf)
+                 mpm_conf->cache_dir_path);
+         return -1;
+     }
+-    PatternDatabaseCache pd_stats = { 0 };
+-    struct HsIteratorData iter_data = { .pd_stats = &pd_stats,
++    PatternDatabaseCache *pd_stats = mpm_conf->cache_stats;
++    struct HsIteratorData iter_data = { .pd_stats = pd_stats,
+         .cache_path = mpm_conf->cache_dir_path };
+     SCMutexLock(&g_db_table_mutex);
+     HashTableIterate(g_db_table, HSSaveCacheIterator, &iter_data);
+     SCMutexUnlock(&g_db_table_mutex);
+-    SCLogNotice("Rule group caching - loaded: %u newly cached: %u total cacheable: %u",
+-            pd_stats.hs_dbs_cache_loaded_cnt, pd_stats.hs_dbs_cache_saved_cnt,
+-            pd_stats.hs_cacheable_dbs_cnt);
+     return 0;
+ }
+ 
++static uint32_t FilenameTableHash(HashTable *ht, void *data, uint16_t len)
++{
++    const char *fname = data;
++    uint32_t hash = hashlittle_safe(data, strlen(fname), 0);
++    hash %= ht->array_size;
++    return hash;
++}
++
++static void FilenameTableFree(void *data)
++{
++    SCFree(data);
++}
++
++static int SCHSCachePrune(MpmConfig *mpm_conf)
++{
++    if (!mpm_conf || !mpm_conf->cache_dir_path) {
++        return -1;
++    }
++
++    SCLogDebug("Pruning the Hyperscan cache folder %s", mpm_conf->cache_dir_path);
++    // we need to initialize hash map of in-use cache files
++    HashTable *inuse_caches =
++            HashTableInit(INIT_DB_HASH_SIZE, FilenameTableHash, NULL, FilenameTableFree);
++    if (inuse_caches == NULL) {
++        return -1;
++    }
++    struct HsInUseCacheFilesIteratorData iter_data = { .tbl = inuse_caches,
++        .cache_path = mpm_conf->cache_dir_path };
++
++    SCMutexLock(&g_db_table_mutex);
++    HashTableIterate(g_db_table, HSCacheFilenameUsedIterator, &iter_data);
++    SCMutexUnlock(&g_db_table_mutex);
++
++    int r = SCHSCachePruneEvaluate(mpm_conf, inuse_caches);
++    HashTableFree(inuse_caches);
++    return r;
++}
++
+ /**
+  * \brief Init the mpm thread context.
+  *
+@@ -1178,7 +1213,11 @@ void MpmHSRegister(void)
+     mpm_table[MPM_HS].AddPattern = SCHSAddPatternCS;
+     mpm_table[MPM_HS].AddPatternNocase = SCHSAddPatternCI;
+     mpm_table[MPM_HS].Prepare = SCHSPreparePatterns;
++    mpm_table[MPM_HS].CacheStatsInit = SCHSCacheStatsInit;
++    mpm_table[MPM_HS].CacheStatsPrint = SCHSCacheStatsPrint;
++    mpm_table[MPM_HS].CacheStatsDeinit = SCHSCacheStatsDeinit;
+     mpm_table[MPM_HS].CacheRuleset = SCHSCacheRuleset;
++    mpm_table[MPM_HS].CachePrune = SCHSCachePrune;
+     mpm_table[MPM_HS].Search = SCHSSearch;
+     mpm_table[MPM_HS].PrintCtx = SCHSPrintInfo;
+     mpm_table[MPM_HS].PrintThreadCtx = SCHSPrintSearchStats;
+diff --git a/src/util-mpm.h b/src/util-mpm.h
+index c2c434152..859ceae12 100644
+--- a/src/util-mpm.h
++++ b/src/util-mpm.h
+@@ -90,6 +90,8 @@ typedef struct MpmPattern_ {
+ 
+ typedef struct MpmConfig_ {
+     const char *cache_dir_path;
++    uint64_t cache_max_age_seconds; /* 0 means disabled/no pruning policy */
++    void *cache_stats;
+ } MpmConfig;
+ 
+ typedef struct MpmCtx_ {
+@@ -175,7 +177,11 @@ typedef struct MpmTableElmt_ {
+     int (*AddPatternNocase)(struct MpmCtx_ *, const uint8_t *, uint16_t, uint16_t, uint16_t,
+             uint32_t, SigIntId, uint8_t);
+     int (*Prepare)(MpmConfig *, struct MpmCtx_ *);
++    void *(*CacheStatsInit)(void);
++    void (*CacheStatsPrint)(void *data);
++    void (*CacheStatsDeinit)(void *data);
+     int (*CacheRuleset)(MpmConfig *);
++    int (*CachePrune)(MpmConfig *);
+     /** \retval cnt number of patterns that matches: once per pattern max. */
+     uint32_t (*Search)(const struct MpmCtx_ *, struct MpmThreadCtx_ *, PrefilterRuleStore *, const uint8_t *, uint32_t);
+     void (*PrintCtx)(struct MpmCtx_ *);
+diff --git a/suricata.yaml.in b/suricata.yaml.in
+index a0ab5a066..d7ce7c2cc 100644
+--- a/suricata.yaml.in
++++ b/suricata.yaml.in
+@@ -1810,6 +1810,10 @@ detect:
+   # Cache files are created in the standard library directory.
+   sgh-mpm-caching: yes
+   sgh-mpm-caching-path: @e_sghcachedir@
++  # Maximum age for cached MPM databases before they are pruned.
++  # Accepts a combination of time units (s,m,h,d,w,y).
++  # Omit to use the default, 0 to disable.
++  # sgh-mpm-caching-max-age: 7d
+   # inspection-recursion-limit: 3000
+   # maximum number of times a tx will get logged for rules without app-layer keywords
+   # stream-tx-log-limit: 4
+commit 56c1552c3e8425ca07ce3b6ba88f2215b984c5fb
+Author: Lukas Sismis <lsismis@oisf.net>
+Date:   Mon Nov 3 19:47:16 2025 +0100
+
+    hs: warn about the same cache directory
+    
+    This is especially relevant for multi-instance simultaneous setups
+    as we might risk read/write races.
+
+diff --git a/doc/userguide/performance/hyperscan.rst b/doc/userguide/performance/hyperscan.rst
+index 1060d3aef..a64322730 100644
+--- a/doc/userguide/performance/hyperscan.rst
++++ b/doc/userguide/performance/hyperscan.rst
+@@ -127,3 +127,7 @@ disables pruning.
+ **Note**:
+ You might need to create and adjust permissions to the default caching folder
+ path, especially if you are running Suricata as a non-root user.
++
++**Note**:
++If you're running multiple Suricata instances, use separate cache folders
++for each one to avoid read/write conflicts when they run at the same time.

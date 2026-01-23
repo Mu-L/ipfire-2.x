@@ -1,7 +1,7 @@
 ###############################################################################
 #                                                                             #
 # IPFire.org - A linux based firewall                                         #
-# Copyright (C) 2007-2025  IPFire Team  <info@ipfire.org>                     #
+# Copyright (C) 2007-2026  IPFire Team  <info@ipfire.org>                     #
 #                                                                             #
 # This program is free software: you can redistribute it and/or modify        #
 # it under the terms of the GNU General Public License as published by        #
@@ -71,6 +71,14 @@ $(TARGET) : $(patsubst %,$(DIR_DL)/%,$(objects))
 	@$(PREBUILD)
 	@rm -rf $(DIR_APP) && cd $(DIR_SRC) && tar zxf $(DIR_DL)/$(DL_FILE)
 	cd $(DIR_APP) && patch -Np1 < $(DIR_SRC)/src/patches/suricata/suricata-8.0.0-disable-sid-2210059.patch
+	cd $(DIR_APP) && patch -Np1 < $(DIR_SRC)/src/patches/suricata/suricata-8.0.3-purge-hyperscan-cache.patch
+
+	# Temporary workaround because the suricata 8.0.3 tarball does not contain the rust source as trusted vendor
+	# for humantime and the module is required since applying the purge-hyperscan-cache patchfile.
+	#
+	#  So we have to copy our installed rust module into the desired directory here.
+	cd $(DIR_APP) && cp -avf /usr/share/cargo/registry/humantime* $(DIR_APP)/rust/vendor
+
 	cd $(DIR_APP) && LDFLAGS="$(LDFLAGS)" ./configure \
 		--prefix=/usr \
 		--sysconfdir=/etc \
@@ -85,6 +93,9 @@ $(TARGET) : $(patsubst %,$(DIR_DL)/%,$(objects))
 		--disable-suricata-update \
 		--enable-rust \
 		--enable-unix-socket
+
+	# Drop the Cargo.lock file before building.
+	cd $(DIR_APP) && rm -rvf $(DIR_APP)/rust/Cargo.lock
 
 	cd $(DIR_APP) && make $(MAKETUNING)
 	cd $(DIR_APP) && make install
