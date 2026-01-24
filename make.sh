@@ -2321,9 +2321,13 @@ check_rootfiles_for_arch() {
 		liburcu
 		ovmf
 		qemu
+		rust-crc32fast
 		rust-memchr
 		rust-libc
+		rust-libc-0.2.108
+		rust-linux-raw-sys
 		rust-ppv-lite86
+		rust-rustix
 		xfsprogs
 	)
 
