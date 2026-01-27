@@ -11,7 +11,6 @@ etc/modprobe.d/ipv6.conf
 #lib/modules/KVER/build/.config
 #lib/modules/KVER/build/Kconfig
 #lib/modules/KVER/build/Makefile
-#lib/modules/KVER/build/Makefile.orig
 #lib/modules/KVER/build/Module.symvers
 #lib/modules/KVER/build/System.map
 #lib/modules/KVER/build/arch
@@ -7490,6 +7489,7 @@ etc/modprobe.d/ipv6.conf
 #lib/modules/KVER/build/include/config/ASYMMETRIC_KEY_TYPE
 #lib/modules/KVER/build/include/config/ASYMMETRIC_PUBLIC_KEY_SUBTYPE
 #lib/modules/KVER/build/include/config/ASYNC_CORE
+#lib/modules/KVER/build/include/config/ASYNC_KERNEL_PGTABLE_FREE
 #lib/modules/KVER/build/include/config/ASYNC_MEMCPY
 #lib/modules/KVER/build/include/config/ASYNC_PQ
 #lib/modules/KVER/build/include/config/ASYNC_RAID6_RECOV
