@@ -297,6 +297,7 @@ usr/lib/ossl-modules/legacy.so
 #usr/share/doc/openssl/html/man3/BIO_s_socket.html
 #usr/share/doc/openssl/html/man3/BIO_sendmmsg.html
 #usr/share/doc/openssl/html/man3/BIO_set_callback.html
+#usr/share/doc/openssl/html/man3/BIO_set_flags.html
 #usr/share/doc/openssl/html/man3/BIO_should_retry.html
 #usr/share/doc/openssl/html/man3/BIO_socket_wait.html
 #usr/share/doc/openssl/html/man3/BN_BLINDING_new.html
@@ -323,6 +324,7 @@ usr/lib/ossl-modules/legacy.so
 #usr/share/doc/openssl/html/man3/CMAC_CTX.html
 #usr/share/doc/openssl/html/man3/CMS_EncryptedData_decrypt.html
 #usr/share/doc/openssl/html/man3/CMS_EncryptedData_encrypt.html
+#usr/share/doc/openssl/html/man3/CMS_EncryptedData_set1_key.html
 #usr/share/doc/openssl/html/man3/CMS_EnvelopedData_create.html
 #usr/share/doc/openssl/html/man3/CMS_add0_cert.html
 #usr/share/doc/openssl/html/man3/CMS_add1_recipient_cert.html
@@ -404,6 +406,7 @@ usr/lib/ossl-modules/legacy.so
 #usr/share/doc/openssl/html/man3/ERR_set_mark.html
 #usr/share/doc/openssl/html/man3/EVP_ASYM_CIPHER_free.html
 #usr/share/doc/openssl/html/man3/EVP_BytesToKey.html
+#usr/share/doc/openssl/html/man3/EVP_CIPHER_CTX_get_app_data.html
 #usr/share/doc/openssl/html/man3/EVP_CIPHER_CTX_get_cipher_data.html
 #usr/share/doc/openssl/html/man3/EVP_CIPHER_CTX_get_original_iv.html
 #usr/share/doc/openssl/html/man3/EVP_CIPHER_meth_new.html
@@ -523,6 +526,7 @@ usr/lib/ossl-modules/legacy.so
 #usr/share/doc/openssl/html/man3/OPENSSL_load_builtin_modules.html
 #usr/share/doc/openssl/html/man3/OPENSSL_load_u16_le.html
 #usr/share/doc/openssl/html/man3/OPENSSL_malloc.html
+#usr/share/doc/openssl/html/man3/OPENSSL_ppccap.html
 #usr/share/doc/openssl/html/man3/OPENSSL_riscvcap.html
 #usr/share/doc/openssl/html/man3/OPENSSL_s390xcap.html
 #usr/share/doc/openssl/html/man3/OPENSSL_secure_malloc.html
@@ -1397,6 +1401,8 @@ usr/lib/ossl-modules/legacy.so
 #usr/share/man/man3/BIO_callback_ctrl.3ossl
 #usr/share/man/man3/BIO_callback_fn.3ossl
 #usr/share/man/man3/BIO_callback_fn_ex.3ossl
+#usr/share/man/man3/BIO_clear_flags.3ossl
+#usr/share/man/man3/BIO_clear_retry_flags.3ossl
 #usr/share/man/man3/BIO_closesocket.3ossl
 #usr/share/man/man3/BIO_connect.3ossl
 #usr/share/man/man3/BIO_ctrl.3ossl
@@ -1470,6 +1476,7 @@ usr/lib/ossl-modules/legacy.so
 #usr/share/man/man3/BIO_get_ex_data.3ossl
 #usr/share/man/man3/BIO_get_ex_new_index.3ossl
 #usr/share/man/man3/BIO_get_fd.3ossl
+#usr/share/man/man3/BIO_get_flags.3ossl
 #usr/share/man/man3/BIO_get_fp.3ossl
 #usr/share/man/man3/BIO_get_indent.3ossl
 #usr/share/man/man3/BIO_get_info_callback.3ossl
@@ -1487,6 +1494,7 @@ usr/lib/ossl-modules/legacy.so
 #usr/share/man/man3/BIO_get_peer_port.3ossl
 #usr/share/man/man3/BIO_get_read_request.3ossl
 #usr/share/man/man3/BIO_get_retry_BIO.3ossl
+#usr/share/man/man3/BIO_get_retry_flags.3ossl
 #usr/share/man/man3/BIO_get_retry_reason.3ossl
 #usr/share/man/man3/BIO_get_rpoll_descriptor.3ossl
 #usr/share/man/man3/BIO_get_shutdown.3ossl
@@ -1599,6 +1607,7 @@ usr/lib/ossl-modules/legacy.so
 #usr/share/man/man3/BIO_set_data.3ossl
 #usr/share/man/man3/BIO_set_ex_data.3ossl
 #usr/share/man/man3/BIO_set_fd.3ossl
+#usr/share/man/man3/BIO_set_flags.3ossl
 #usr/share/man/man3/BIO_set_fp.3ossl
 #usr/share/man/man3/BIO_set_indent.3ossl
 #usr/share/man/man3/BIO_set_info_callback.3ossl
@@ -1611,7 +1620,10 @@ usr/lib/ossl-modules/legacy.so
 #usr/share/man/man3/BIO_set_next.3ossl
 #usr/share/man/man3/BIO_set_prefix.3ossl
 #usr/share/man/man3/BIO_set_read_buffer_size.3ossl
+#usr/share/man/man3/BIO_set_retry_read.3ossl
 #usr/share/man/man3/BIO_set_retry_reason.3ossl
+#usr/share/man/man3/BIO_set_retry_special.3ossl
+#usr/share/man/man3/BIO_set_retry_write.3ossl
 #usr/share/man/man3/BIO_set_shutdown.3ossl
 #usr/share/man/man3/BIO_set_sock_type.3ossl
 #usr/share/man/man3/BIO_set_ssl.3ossl
@@ -1633,6 +1645,7 @@ usr/lib/ossl-modules/legacy.so
 #usr/share/man/man3/BIO_ssl_copy_session_id.3ossl
 #usr/share/man/man3/BIO_ssl_shutdown.3ossl
 #usr/share/man/man3/BIO_tell.3ossl
+#usr/share/man/man3/BIO_test_flags.3ossl
 #usr/share/man/man3/BIO_up_ref.3ossl
 #usr/share/man/man3/BIO_vfree.3ossl
 #usr/share/man/man3/BIO_vprintf.3ossl
@@ -1821,6 +1834,7 @@ usr/lib/ossl-modules/legacy.so
 #usr/share/man/man3/CMS_EncryptedData_decrypt.3ossl
 #usr/share/man/man3/CMS_EncryptedData_encrypt.3ossl
 #usr/share/man/man3/CMS_EncryptedData_encrypt_ex.3ossl
+#usr/share/man/man3/CMS_EncryptedData_set1_key.3ossl
 #usr/share/man/man3/CMS_EnvelopedData_create.3ossl
 #usr/share/man/man3/CMS_EnvelopedData_create_ex.3ossl
 #usr/share/man/man3/CMS_EnvelopedData_decrypt.3ossl
@@ -3810,6 +3824,7 @@ usr/lib/ossl-modules/legacy.so
 #usr/share/man/man3/OPENSSL_mem_debug_push.3ossl
 #usr/share/man/man3/OPENSSL_memdup.3ossl
 #usr/share/man/man3/OPENSSL_no_config.3ossl
+#usr/share/man/man3/OPENSSL_ppccap.3ossl
 #usr/share/man/man3/OPENSSL_realloc.3ossl
 #usr/share/man/man3/OPENSSL_realloc_array.3ossl
 #usr/share/man/man3/OPENSSL_riscvcap.3ossl
