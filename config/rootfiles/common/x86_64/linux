@@ -10978,6 +10978,10 @@ etc/modprobe.d/ipv6.conf
 #lib/modules/KVER/build/include/config/RT_GROUP_SCHED
 #lib/modules/KVER/build/include/config/RT_MUTEXES
 #lib/modules/KVER/build/include/config/RUSTC_HAS_COERCE_POINTEE
+#lib/modules/KVER/build/include/config/RUSTC_HAS_FILE_AS_C_STR
+#lib/modules/KVER/build/include/config/RUSTC_HAS_FILE_WITH_NUL
+#lib/modules/KVER/build/include/config/RUSTC_HAS_SPAN_FILE
+#lib/modules/KVER/build/include/config/RUSTC_HAS_UNNECESSARY_TRANSMUTES
 #lib/modules/KVER/build/include/config/RUSTC_LLVM_VERSION
 #lib/modules/KVER/build/include/config/RUSTC_VERSION
 #lib/modules/KVER/build/include/config/RWSEM_SPIN_ON_OWNER
