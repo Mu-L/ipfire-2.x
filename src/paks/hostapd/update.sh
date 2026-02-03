@@ -26,7 +26,9 @@ exctract_backup_includes
 
 # Remove any previous DEBUG= statements
 if [ -e "/var/ipfire/wlanap/settings" ]; then
-	sed -e "/^DEBUG=/d" -i /var/ipfire/wlanap/settings
+	sed -i /var/ipfire/wlanap/settings \
+		-e "/^DEBUG=/d" \
+		-e "/^V?HTCAPS=/d"
 fi
 
 ./uninstall.sh
